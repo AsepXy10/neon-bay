@@ -3,8 +3,8 @@
 // and fall when the player stays out of sight; police cars chase and ram,
 // foot cops chase and shoot, and at five stars the whole city is after you.
 
-import { PALETTE, WANTED } from './config.js';
-import { wrapAngle } from './vehicles.js';
+import { PALETTE, ROADS, ROADBLOCK, WANTED } from './config.js';
+import { createCar, wrapAngle } from './vehicles.js';
 import { clampToWorld, resolveBuildingCollision } from './city.js';
 
 /** A police car or a foot cop. */
@@ -29,6 +29,8 @@ export function createPolice() {
     decayTimer: 0,
     cars: [],
     cops: [],
+    roadblock: [],
+    roadblockTimer: 0,
     nearestCopDist: Infinity,
   };
 }
@@ -41,6 +43,67 @@ export function addWanted(police, amount) {
 export function setWanted(police, amount) {
   police.stars = Math.max(0, Math.min(WANTED.max, amount));
   police.decayTimer = WANTED.decayDelay;
+}
+
+/**
+ * Throw up a roadblock: two parked police cars across the road at (x, y),
+ * facing across it (perpendicular to `angle`, the road's direction). They
+ * sit still until they are cleared or wrecked, and the player can ram
+ * through them like any other police car.
+ */
+export function placeRoadblock(police, x, y, angle) {
+  const across = angle + Math.PI / 2;
+  const cars = [];
+  for (const offset of [-24, 24]) {
+    const car = createCar(
+      x + Math.cos(across) * offset,
+      y + Math.sin(across) * offset,
+      across, PALETTE.police, 'police',
+    );
+    car.roadblock = true;
+    cars.push(car);
+  }
+  police.roadblock = cars;
+  police.roadblockTimer = ROADBLOCK.cooldown;
+  return cars;
+}
+
+/** The nearest road line to a point, for snapping a roadblock onto asphalt. */
+function nearestRoadLine(value) {
+  let best = ROADS.lines[0];
+  for (const line of ROADS.lines) {
+    if (Math.abs(line - value) < Math.abs(best - value)) best = line;
+  }
+  return best;
+}
+
+/**
+ * Keep the roadblock: throw one ahead of the player once the heat reaches
+ * ROADBLOCK.minStars, stand it down when the heat falls, when every car in
+ * it is wrecked, or when the player is far past it.
+ */
+function updateRoadblock(police, px, py, playerAngle, dt) {
+  police.roadblockTimer = Math.max(0, police.roadblockTimer - dt);
+  if (police.roadblock.length > 0) {
+    const cx = (police.roadblock[0].x + police.roadblock[1].x) / 2;
+    const cy = (police.roadblock[0].y + police.roadblock[1].y) / 2;
+    const allWrecked = police.roadblock.every((c) => c.wrecked);
+    const farAway = Math.hypot(px - cx, py - cy) > ROADBLOCK.clearDistance;
+    if (police.stars < ROADBLOCK.minStars || allWrecked || farAway) {
+      police.roadblock = [];
+      police.roadblockTimer = ROADBLOCK.cooldown;
+    }
+    return;
+  }
+  if (police.stars < ROADBLOCK.minStars || police.roadblockTimer > 0) return;
+  // Ahead of the player, snapped onto the road they are travelling along.
+  const aheadX = px + Math.cos(playerAngle) * ROADBLOCK.ahead;
+  const aheadY = py + Math.sin(playerAngle) * ROADBLOCK.ahead;
+  const horizontal = Math.abs(Math.cos(playerAngle)) >= Math.abs(Math.sin(playerAngle));
+  const bx = horizontal ? aheadX : nearestRoadLine(aheadX);
+  const by = horizontal ? nearestRoadLine(aheadY) : aheadY;
+  const clamped = clampToWorld(bx, by);
+  placeRoadblock(police, clamped.x, clamped.y, playerAngle);
 }
 
 /** Where a new police car appears: on a road, a few blocks from the player. */
@@ -94,6 +157,10 @@ export function stepPolice(police, player, playerCar, dt, random, buildings, onS
   // Trim the chase when the heat falls.
   while (police.cars.length > wantCount(police, 'car')) police.cars.pop();
   while (police.cops.length > wantCount(police, 'cop')) police.cops.pop();
+
+  // The NBPD throws a roadblock across the road ahead at three stars and up.
+  const playerAngle = playerCar ? playerCar.angle : (player.angle ?? 0);
+  updateRoadblock(police, px, py, playerAngle, dt);
 
   // Police cars: steer at the player, ram on contact, slide around buildings.
   for (const car of police.cars) {

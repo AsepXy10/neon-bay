@@ -201,6 +201,7 @@ function respawn(kind) {
   setWanted(game.police, 0);
   game.police.cars = [];
   game.police.cops = [];
+  game.police.roadblock = [];
   game.bullets = [];
   saveGame();
 }
@@ -247,9 +248,13 @@ function stepWorld(dt, opts) {
   }
 
   // --- Traffic, rivals, wrecks.
+  // Traffic also slows for a parked roadblock, not just for other traffic.
+  const roadAware = game.police.roadblock.length > 0
+    ? [...game.cars, ...game.police.roadblock]
+    : game.cars;
   for (const car of game.cars) {
     car.hitCooldown = Math.max(0, car.hitCooldown - dt);
-    if (car.kind === 'traffic') stepTrafficCar(car, dt, game.random, game.cars);
+    if (car.kind === 'traffic') stepTrafficCar(car, dt, game.random, roadAware);
     else if (car.kind === 'rival' && !car.wrecked) stepRival(car, dt);
     else if (car.wrecked) stepWreck(car, dt);
   }
@@ -283,8 +288,8 @@ function stepWorld(dt, opts) {
         spawnSparks(game.particles, ped.x, ped.y);
       }
     }
-    // And against police cars.
-    for (const copCar of game.police.cars) {
+    // And against police cars, roadblock ones included.
+    for (const copCar of [...game.police.cars, ...game.police.roadblock]) {
       copCar.hitCooldown = Math.max(0, (copCar.hitCooldown || 0) - dt);
       const impact = collideCars(car, copCar);
       if (impact > 140) {
@@ -317,7 +322,7 @@ function stepWorld(dt, opts) {
   // --- Bullets.
   const hits = stepBullets(game.bullets, dt, {
     buildings: game.city.buildings,
-    cars: [...game.cars, ...game.police.cars],
+    cars: [...game.cars, ...game.police.cars, ...game.police.roadblock],
     peds: game.peds,
     cops: game.police.cops,
     player,

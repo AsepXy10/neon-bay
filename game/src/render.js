@@ -114,6 +114,11 @@ export function createRenderer(canvas) {
     ctx.save();
     ctx.translate(c.x - camera.x + view.w / 2, c.y - camera.y + view.h / 2);
     ctx.rotate(c.angle);
+    // A short shadow grounds the car on the road.
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    ctx.beginPath();
+    ctx.ellipse(2, 3, 28, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
     // Wheels.
     ctx.fillStyle = '#111';
     ctx.fillRect(-18, -15, 12, 6);
@@ -177,6 +182,11 @@ export function createRenderer(canvas) {
       return;
     }
     const bob = Math.sin(p.bob) * 2;
+    // A short shadow under the walker, so people read as people, not dots.
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    ctx.beginPath();
+    ctx.ellipse(s.x, s.y + 4, 10, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.save();
     ctx.translate(s.x, s.y + bob * 0.4);
     ctx.rotate(p.angle);
@@ -184,6 +194,9 @@ export function createRenderer(canvas) {
     ctx.beginPath();
     ctx.arc(0, 0, 9, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
     ctx.fillStyle = p.skin;
     ctx.beginPath();
     ctx.arc(5, 0, 5, 0, Math.PI * 2);
@@ -299,6 +312,9 @@ export function createRenderer(canvas) {
     for (const b of game.city.buildings) {
       if (b.x + b.w < left || b.x > right || b.y + b.h < top || b.y > bottom) continue;
       const s = toScreen(b.x, b.y);
+      // A short shadow lifts the block off the ground.
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fillRect(s.x + 7, s.y + 9, b.w, b.h);
       ctx.fillStyle = b.wall;
       ctx.fillRect(s.x, s.y, b.w, b.h);
       ctx.fillStyle = b.roof;
@@ -450,6 +466,10 @@ export function createRenderer(canvas) {
     for (const ped of game.peds) drawPed(ped);
     for (const cop of game.police.cops) {
       const s = toScreen(cop.x, cop.y);
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y + 4, 10, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.save();
       ctx.translate(s.x, s.y);
       ctx.rotate(cop.angle);
@@ -466,6 +486,8 @@ export function createRenderer(canvas) {
       ctx.restore();
     }
     for (const car of game.police.cars) drawCar(car, night);
+    // The roadblock: parked police cars across the road ahead.
+    for (const car of game.police.roadblock) drawCar(car, night);
     // Bullets.
     ctx.strokeStyle = '#ffe600';
     ctx.lineWidth = 2;

@@ -66,6 +66,18 @@ export const WANTED = {
   bustDistance: 26,
 };
 
+/** NBPD roadblocks: thrown across the road once the heat is high enough. */
+export const ROADBLOCK = {
+  // The wanted level at which the NBPD starts throwing roadblocks.
+  minStars: 3,
+  // How far ahead of the player the blockade is thrown, in world pixels.
+  ahead: 520,
+  // The blockade stands down once the player is this far from it.
+  clearDistance: 1400,
+  // Seconds after a blockade stands down before the NBPD throws another.
+  cooldown: 20,
+};
+
 export const ECONOMY = {
   startMoney: 150,
   payAndSprayCost: 200,

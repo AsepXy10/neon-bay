@@ -78,6 +78,7 @@ function drawMinimap(ctx, game, x, y) {
   // Police.
   for (const cop of game.police.cars) dot(cop.x, cop.y, '#4d8dff', 3);
   for (const cop of game.police.cops) dot(cop.x, cop.y, '#4d8dff', 2.5);
+  for (const car of game.police.roadblock) dot(car.x, car.y, '#4d8dff', 3);
   // Mission target: a pulsing yellow diamond.
   const target = targetPoint(game.missionState);
   if (target) {

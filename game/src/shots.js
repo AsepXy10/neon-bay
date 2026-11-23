@@ -6,7 +6,7 @@
 
 import { PALETTE } from './config.js';
 import { createCar } from './vehicles.js';
-import { setWanted } from './police.js';
+import { placeRoadblock, setWanted } from './police.js';
 import { createPed } from './pedestrians.js';
 import { beginStep } from './missions.js';
 
@@ -32,26 +32,29 @@ function addPoliceCar(game, x, y, angle) {
 }
 
 function stageChase(game) {
-  // Morning in Downtown, three stars, two police cars on the player's tail.
-  // Rex is running west for the Docks with the law behind him — the job is
-  // two thousand metres away, so the chase never finishes mid-shot.
+  // Morning in Downtown, three stars, two police cars on the player's tail
+  // and an NBPD roadblock thrown across the road ahead — the job is two
+  // thousand metres away, so the chase never finishes mid-shot.
   game.clock = 0.18;
   game.missionState.missionIndex = 1;
   game.missionState.stepIndex = 0;
   beginStep(game.missionState, game);
   const car = putPlayerInCar(game, 2400, 800, Math.PI, '#e63946', 430);
-  addPoliceCar(game, 2600, 824, Math.PI);
-  addPoliceCar(game, 2700, 776, Math.PI);
+  // Same lane, close behind: the chase reads at a glance.
+  addPoliceCar(game, 2620, 800, Math.PI);
+  addPoliceCar(game, 2740, 800, Math.PI);
+  // The blockade ahead, on the same road the player is racing down.
+  placeRoadblock(game.police, 1200, 800, Math.PI);
   game.player.money = 1250;
   setWanted(game.police, 3);
-  // Traffic with somewhere to be: one faster car well ahead in the player's
-  // lane, two crossing the grid on the roads around him.
-  for (const [x, y, angle, speed] of [[1200, 776, Math.PI, 250], [1600, 1300, Math.PI / 2, 150], [1500, 1200, Math.PI, 160]]) {
+  // Traffic with somewhere to be: one faster car well ahead on another road,
+  // two crossing the grid on the roads around him.
+  for (const [x, y, angle, speed] of [[2000, 1200, Math.PI, 250], [1600, 1300, Math.PI / 2, 150], [1500, 1200, Math.PI, 160]]) {
     const t = createCar(x, y, angle, '#2980b9', 'traffic');
     t.speed = speed;
     game.cars.push(t);
   }
-  return { screen: 'play', autopilot: 'drive', seconds: 4 };
+  return { screen: 'play', autopilot: 'drive', seconds: 1.5 };
 }
 
 function stageStreet(game) {
@@ -63,12 +66,13 @@ function stageStreet(game) {
   game.player.y = 1560;
   game.player.angle = -Math.PI / 2;
   game.player.money = 450;
+  // A crowd right around Rex, not scattered across the block.
   for (let i = 0; i < 10; i += 1) {
-    const ped = createPed(1480 + game.random() * 220, 1480 + game.random() * 220, game.random);
-    ped.target = { x: 1500 + game.random() * 200, y: 1500 + game.random() * 200 };
+    const ped = createPed(1500 + game.random() * 160, 1500 + game.random() * 160, game.random);
+    ped.target = { x: 1500 + game.random() * 160, y: 1500 + game.random() * 160 };
     game.peds.push(ped);
   }
-  for (const [x, y, angle, speed] of [[1000, 1600, 0, 150], [1600, 1000, Math.PI / 2, 150]]) {
+  for (const [x, y, angle, speed] of [[1000, 1600, 0, 150], [1600, 1000, Math.PI / 2, 150], [2000, 1600, Math.PI, 150]]) {
     const t = createCar(x, y, angle, '#2980b9', 'traffic');
     t.speed = speed;
     game.cars.push(t);
@@ -77,28 +81,34 @@ function stageStreet(game) {
 }
 
 function stageMission(game) {
-  // The Package, mid-job: the crates are on the ground at the Docks.
+  // The Package, mid-job: the crates are on the ground at the Docks, and
+  // Rex is right there in the teal Comet to grab them.
   game.clock = 0.25;
   game.missionState.missionIndex = 1;
   game.missionState.stepIndex = 1;
   beginStep(game.missionState, game);
-  putPlayerInCar(game, 560, 400, Math.PI / 2, '#16a085', 0);
+  putPlayerInCar(game, 460, 420, -Math.PI / 2, '#16a085', 0);
+  // A car crossing the Docks junction behind him.
+  const t = createCar(400, 700, -Math.PI / 2, '#2980b9', 'traffic');
+  t.speed = 150;
+  game.cars.push(t);
   game.player.money = 800;
   return { screen: 'play', autopilot: null, seconds: 2 };
 }
 
 function stageNight(game) {
-  // Neon Row after dark: the signs are on, one star, one police car closing in.
-  // Rex runs east along the middle of the grid, buildings lit on both sides.
+  // Neon Row after dark, for real this time: the signs are on, one star,
+  // one police car closing in. Rex runs east along Neon Row, buildings lit
+  // on both sides.
   game.clock = 0.78;
   game.missionState.missionIndex = 2;
   game.missionState.stepIndex = 0;
   beginStep(game.missionState, game);
-  putPlayerInCar(game, 1200, 1600, 0, '#8e44ad', 380);
-  addPoliceCar(game, 1000, 1624, 0);
+  putPlayerInCar(game, 2000, 800, 0, '#8e44ad', 380);
+  addPoliceCar(game, 1800, 824, 0);
   game.player.money = 2100;
   setWanted(game.police, 1);
-  return { screen: 'play', autopilot: 'drive', seconds: 3 };
+  return { screen: 'play', autopilot: 'drive', seconds: 2 };
 }
 
 /**
