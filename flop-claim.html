@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flop Faucet — Klaim 10 FLOP</title>
+<style>body{font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:0 16px}button{font-size:18px;padding:12px 24px;cursor:pointer}pre{background:#f4f4f4;padding:12px;white-space:pre-wrap;word-break:break-all}</style>
+</head>
+<body>
+<h1>Klaim 10 FLOP (Flop Testnet)</h1>
+<p>Wallet: <code>5FjCC63i1SNNbEkk5eAzGQi4XPsbkwXjhyHgBCfnaRds763D</code></p>
+<p>Nonce: <code>1795589151131</code> — grant 10 FLOP / 24 jam.</p>
+<p><b>Klik tombol di bawah tepat jam 07:00 WIB</b> (reset kuota harian). Jangan klik dua kali.</p>
+<button id="claim">Klaim 10 FLOP</button>
+<p id="status"></p>
+<pre id="out"></pre>
+<script>
+const payload = {"address":"5FjCC63i1SNNbEkk5eAzGQi4XPsbkwXjhyHgBCfnaRds763D","nonce":"1795589151131","signature":"0xe4df15086bef68c19ce88f184c3a42954d0969d2cc5af9ee40efd019d6bbe07e524c7399e55f44ade842b15d2c909d8bd558a5da0196789b785797ed37dfae80"};
+document.getElementById('claim').onclick = async () => {
+  const st = document.getElementById('status'), out = document.getElementById('out');
+  const btn = document.getElementById('claim'); btn.disabled = true;
+  st.textContent = 'Mengirim klaim…';
+  try {
+    const r = await fetch('https://faucet.flop.network/v1/testnet/agent-claims', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const t = await r.text();
+    st.textContent = 'HTTP ' + r.status;
+    out.textContent = t;
+  } catch (e) {
+    st.textContent = 'Fetch normal diblokir (CORS) — mencoba kirim tanpa baca respons…';
+    try {
+      await fetch('https://faucet.flop.network/v1/testnet/agent-claims', {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload)});
+      st.textContent = 'Terkirim (respons tidak bisa dibaca dari browser). Cek saldo on-chain untuk memastikan.';
+    } catch (e2) {
+      st.textContent = 'Gagal mengirim: ' + e2;
+    }
+  }
+};
+</script>
+</body>
+</html>
