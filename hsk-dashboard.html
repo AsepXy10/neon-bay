@@ -3,55 +3,156 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0e14">
 <title>Neon Trader — HSK Testnet Dashboard (static)</title>
 <style>
-  :root { --bg:#0b0e14; --card:#141926; --card2:#1a2033; --line:#26304a; --txt:#e6eaf2; --mut:#8b93a7; --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  :root {
+    --bg:#0a0e14; --card:#121826; --line:rgba(148,163,184,.14); --line-strong:rgba(148,163,184,.26);
+    --txt:#e8edf5; --mut:#94a3b8; --mut2:#64748b;
+    --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --cyan:#22d3ee; --violet:#818cf8;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --r:16px;
+    --shadow:0 1px 2px rgba(2,6,23,.5),0 16px 40px -16px rgba(2,6,23,.65);
+  }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
-  header { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px 20px; align-items:baseline; }
-  header h1 { margin:0; font-size:20px; }
-  header .sub { color:var(--mut); font-size:13px; }
-  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
-  .b-green { background:#064e3b; color:var(--green); } .b-red { background:#450a0a; color:var(--red); }
-  .b-amber { background:#451a03; color:var(--amber); } .b-blue { background:#172554; color:var(--blue); }
-  .b-grey { background:#1f2937; color:var(--mut); }
-  main { padding:16px 20px 40px; display:grid; gap:16px; max-width:1200px; margin:0 auto; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  @media (max-width:800px){ .grid2{grid-template-columns:1fr;} }
-  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
-  section h2 { margin:0 0 10px; font-size:15px; letter-spacing:.02em; }
-  .kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px 16px; }
-  .kv div b { display:block; font-size:12px; color:var(--mut); font-weight:500; }
-  .kv div span { font-size:15px; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    margin:0; color:var(--txt); font:14px/1.55 var(--sans); min-height:100vh;
+    background:
+      radial-gradient(900px 380px at 50% -8%, rgba(34,211,238,.09), transparent 62%),
+      radial-gradient(760px 320px at 88% -4%, rgba(129,140,248,.08), transparent 60%),
+      var(--bg);
+  }
+  ::selection { background:rgba(34,211,238,.28); }
+  a:focus-visible, summary:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+
+  /* ---- sticky header ---- */
+  header {
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:12px 20px;
+    background:rgba(10,14,20,.82);
+    -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand { display:flex; align-items:center; gap:12px; min-width:0; }
+  .logo {
+    flex:0 0 auto; width:38px; height:38px; border-radius:11px;
+    display:grid; place-items:center; font-size:19px; font-weight:800; color:#06121a;
+    background:linear-gradient(135deg,#22d3ee 0%,#818cf8 55%,#c084fc 100%);
+    box-shadow:0 4px 16px -2px rgba(56,189,248,.45), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .brand-text h1 { margin:0; font-size:19px; line-height:1.2; font-weight:750; letter-spacing:-.015em; }
+  .brand-text h1 .grad { background:linear-gradient(90deg,#22d3ee,#818cf8); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .brand-text .sub { margin:1px 0 0; font-size:12px; color:var(--mut); }
+  .chain-badge { margin-left:4px; }
+  #status-line {
+    margin-left:auto; display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap;
+    font-size:12.5px; color:var(--mut); font-variant-numeric:tabular-nums;
+    background:rgba(148,163,184,.08); border:1px solid var(--line); border-radius:999px; padding:6px 12px;
+  }
+  @media (max-width:640px){ #status-line{ margin-left:0; } .chain-badge{ display:none; } }
+
+  /* ---- layout ---- */
+  main { padding:20px 20px 48px; display:grid; gap:20px; max-width:1160px; margin:0 auto; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:860px){ .grid2{grid-template-columns:1fr;} }
+  section {
+    background:linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 40%), var(--card);
+    border:1px solid var(--line); border-radius:var(--r); padding:18px 20px; box-shadow:var(--shadow);
+  }
+  section h2 { margin:0 0 14px; font-size:14px; font-weight:650; letter-spacing:.02em; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  section h2 .tag { margin-left:auto; }
+  section h2 .tag ~ .tag { margin-left:0; }
+  section h2 .mut { font-weight:400; }
+
+  /* ---- badges, pills, tags ---- */
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.05em; border:1px solid transparent; white-space:nowrap; }
+  .b-green { background:rgba(52,211,153,.13); color:var(--green); border-color:rgba(52,211,153,.32); }
+  .b-red { background:rgba(248,113,113,.13); color:var(--red); border-color:rgba(248,113,113,.32); }
+  .b-amber { background:rgba(251,191,36,.13); color:var(--amber); border-color:rgba(251,191,36,.32); }
+  .b-blue { background:rgba(96,165,250,.13); color:var(--blue); border-color:rgba(96,165,250,.32); }
+  .b-grey { background:rgba(148,163,184,.13); color:var(--mut); border-color:rgba(148,163,184,.28); }
+  .pill { display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:700; letter-spacing:.04em; border:1px solid transparent; white-space:nowrap; }
+  .pill.buy { background:rgba(52,211,153,.16); color:var(--green); border-color:rgba(52,211,153,.4); }
+  .pill.sell { background:rgba(248,113,113,.16); color:var(--red); border-color:rgba(248,113,113,.4); }
+  .pill.none { background:rgba(148,163,184,.12); color:var(--mut); border-color:rgba(148,163,184,.28); }
+  .tag { display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; letter-spacing:.07em; padding:3px 9px; border-radius:999px; border:1px solid var(--line-strong); background:rgba(148,163,184,.1); color:var(--mut); white-space:nowrap; }
+  .tag.live { background:rgba(52,211,153,.13); color:var(--green); border-color:rgba(52,211,153,.32); }
+  .tag.live::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2.2s ease-out infinite; }
+  .tag.snap { background:rgba(251,191,36,.11); color:var(--amber); border-color:rgba(251,191,36,.3); }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(52,211,153,.45);} 70%{box-shadow:0 0 0 7px rgba(52,211,153,0);} 100%{box-shadow:0 0 0 0 rgba(52,211,153,0);} }
+
+  /* ---- stat tiles ---- */
+  .kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; }
+  .kv > div { background:rgba(148,163,184,.055); border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-width:0; }
+  .kv > div > b { display:block; font-size:10.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--mut); margin-bottom:3px; }
+  .kv > div > span { font-size:15px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.01em; word-break:break-word; }
   .mono { font-family:var(--mono); font-size:12.5px; word-break:break-all; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { color:var(--mut); font-weight:500; font-size:12px; }
+
+  /* ---- markets ---- */
+  #markets h3 { font-size:15px; font-weight:650; letter-spacing:-.01em; padding-top:16px; border-top:1px solid var(--line); }
+  #markets h3:first-child { border-top:0; padding-top:2px; }
+  #markets h3 .pill { vertical-align:middle; }
+
+  /* ---- tables ---- */
+  table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:600; font-size:11px; letter-spacing:.07em; text-transform:uppercase; background:rgba(148,163,184,.06); }
+  tr:last-child td { border-bottom:0; }
+  tbody tr:hover td { background:rgba(148,163,184,.04); }
   .num { text-align:right; font-variant-numeric:tabular-nums; }
-  .pos { color:var(--green); } .neg { color:var(--red); }
-  .pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; }
-  .pill.buy { background:#064e3b; color:var(--green); } .pill.sell { background:#450a0a; color:var(--red); }
-  .pill.none { background:#1f2937; color:var(--mut); }
-  details { margin-top:4px; } summary { cursor:pointer; color:var(--blue); font-size:12.5px; }
-  .rationale { font-size:12.5px; color:var(--mut); white-space:pre-wrap; word-break:break-word; }
-  .cap { display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); }
+  @media (max-width:640px){ #journal, #positions { overflow-x:auto; } th, td { padding:8px 10px; } }
+  .pos { color:var(--green); font-weight:600; }
+  .neg { color:var(--red); font-weight:600; }
+
+  /* ---- decision details ---- */
+  details { margin-top:12px; }
+  summary {
+    cursor:pointer; color:var(--blue); font-size:12.5px; font-weight:600; list-style:none;
+    display:inline-flex; align-items:center; gap:7px; padding:6px 12px;
+    border:1px solid var(--line); border-radius:999px; background:rgba(96,165,250,.08);
+  }
+  summary::-webkit-details-marker { display:none; }
+  summary::before { content:""; width:7px; height:7px; border-right:2px solid var(--blue); border-bottom:2px solid var(--blue); transform:rotate(-45deg); transition:transform .18s ease; flex:0 0 auto; }
+  details[open] summary::before { transform:rotate(45deg); }
+  summary:hover { background:rgba(96,165,250,.15); }
+  .rationale { font-size:13px; color:#cbd5e1; background:rgba(148,163,184,.06); border:1px solid var(--line); border-radius:10px; padding:10px 12px; white-space:pre-wrap; word-break:break-word; margin:10px 0 6px; }
+
+  /* ---- risk caps + usage bars ---- */
+  .cap { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:center; }
   .cap:last-child { border-bottom:0; }
-  .cap .cname { color:var(--mut); font-size:13px; } .cap .cname small { display:block; color:#5b6376; font-size:11.5px; }
-  .err { background:#450a0a; color:#fecaca; padding:8px 10px; border-radius:8px; font-size:13px; }
-  .mut { color:var(--mut); } .small { font-size:12.5px; }
-  footer { color:var(--mut); font-size:12px; padding:0 20px 20px; max-width:1200px; margin:0 auto; }
-  #status-line { margin-left:auto; font-size:12.5px; color:var(--mut); }
-  .src-banner { background:#172554; border:1px solid #26304a; border-radius:12px; padding:10px 16px; font-size:13px; color:#c7d2fe; }
+  .cap .cname { color:var(--txt); font-size:13.5px; font-weight:600; }
+  .cap .cname small { display:block; color:var(--mut2); font-size:11.5px; font-weight:400; margin-top:1px; }
+  .cap > span:nth-child(2) { font-variant-numeric:tabular-nums; font-size:13px; white-space:nowrap; }
+  .cap-bar { grid-column:1 / -1; height:6px; border-radius:999px; background:rgba(148,163,184,.14); overflow:hidden; }
+  .cap-bar > i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--cyan), var(--green)); transition:width .5s ease; }
+  .cap-bar.warn > i { background:linear-gradient(90deg, #f59e0b, var(--amber)); }
+  .cap-bar.bad > i { background:linear-gradient(90deg, #ef4444, var(--red)); }
+  .cap-bar.na { opacity:.35; }
+  .cap-bar.na > i { width:0 !important; }
+
+  /* ---- misc ---- */
+  .err { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3); color:#fecaca; padding:10px 12px; border-radius:10px; font-size:13px; }
+  .mut { color:var(--mut); }
+  .small { font-size:12.5px; }
+  .src-banner { background:linear-gradient(90deg, rgba(96,165,250,.13), rgba(34,211,238,.06)); border:1px solid rgba(96,165,250,.28); border-left:3px solid var(--blue); border-radius:12px; padding:12px 16px; font-size:13px; color:#c7d2fe; line-height:1.6; }
   .src-banner b { color:#e6eaf2; }
-  .tag { font-size:11px; font-weight:600; padding:1px 6px; border-radius:999px; background:#1f2937; color:var(--mut); vertical-align:middle; }
-  .tag.live { background:#064e3b; color:var(--green); }
-  .tag.snap { background:#451a03; color:var(--amber); }
+  footer { color:var(--mut2); font-size:12px; line-height:1.6; padding:16px 20px 28px; max-width:1160px; margin:0 auto; border-top:1px solid var(--line); }
 </style>
 </head>
 <body>
 <header>
-  <h1>Neon Trader <span class="badge b-blue">HSK TESTNET · chain 133</span></h1>
-  <span class="sub">AI agent trading — read-only dashboard (no trades, no signatures)</span>
+  <div class="brand">
+    <span class="logo" aria-hidden="true">N</span>
+    <div class="brand-text">
+      <h1>Neon <span class="grad">Trader</span></h1>
+      <p class="sub">AI agent trading · read-only · no trades, no signatures</p>
+    </div>
+    <span class="badge b-blue chain-badge">HSK TESTNET · CHAIN 133</span>
+  </div>
   <span id="status-line">loading…</span>
 </header>
 <main>
@@ -63,7 +164,7 @@
 
   <div class="grid2">
     <section><h2>Positions &amp; P&amp;L <span class="mut small">(paper / testnet)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="positions">loading…</div></section>
-    <section><h2>Risk caps <span class="tag live">LIVE</span> + <span class="tag snap">SNAPSHOT</span></h2><div id="risk">loading…</div></section>
+    <section><h2>Risk caps <span class="tag live">LIVE</span> <span class="mut small">+</span> <span class="tag snap">SNAPSHOT</span></h2><div id="risk">loading…</div></section>
   </div>
 
   <div class="grid2">
@@ -74,7 +175,6 @@
   <section><h2>Decision journal <span class="mut small">(hash-chained)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="journal">loading…</div></section>
 </main>
 <footer>Neon Trader — HSK Chain Horizon Hackathon, Track 1 (AI Agent Trading). On-chain data (pool prices, oracle, balances, allowances) is fetched live from the HSK testnet RPC in your browser and refreshes every 15s. Agent state, positions, risk-cap usage, vaults and the journal are a snapshot taken when this page was published — re-publish to refresh them. Trades execute through the PolicyVault (Day 4) after the user deploys it; the agent never holds a signing key in this workspace.</footer>
-
 <script>
 'use strict';
 /* =====================================================================
@@ -617,6 +717,43 @@ async function load() {
 }
 load();
 setInterval(load, 15000);
+</script>
+<script>
+/* Presentation-only enhancer: usage bars under each risk-cap row.
+   Runs after every render (the page re-renders every 15s). It only reads
+   the rendered text and appends a decorative bar — it never touches data,
+   thresholds, or the main script above. */
+(function () {
+  if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') return;
+  function paint(row) {
+    if (row.querySelector('.cap-bar')) return;
+    var text = row.textContent || '';
+    var m = text.match(/([\d,]+(?:\.\d+)?)\s*\/\s*([\d,]+(?:\.\d+)?)/);
+    var bar = document.createElement('div');
+    bar.className = 'cap-bar';
+    var fill = document.createElement('i');
+    if (!m) {
+      bar.classList.add('na');
+      fill.style.width = '0%';
+    } else {
+      var cur = parseFloat(m[1].replace(/,/g, ''));
+      var lim = parseFloat(m[2].replace(/,/g, ''));
+      var pct = lim > 0 ? Math.min(100, (cur / lim) * 100) : 0;
+      fill.style.width = pct.toFixed(1) + '%';
+      if (row.querySelector('.b-red')) bar.classList.add('bad');
+      else if (row.querySelector('.b-amber')) bar.classList.add('warn');
+    }
+    bar.appendChild(fill);
+    row.appendChild(bar);
+  }
+  function decorate() {
+    var rows = document.querySelectorAll('#risk .cap');
+    for (var i = 0; i < rows.length; i++) paint(rows[i]);
+  }
+  var target = document.getElementById('risk');
+  if (target) new MutationObserver(decorate).observe(target, { childList: true, subtree: true });
+  decorate();
+})();
 </script>
 </body>
 </html>
