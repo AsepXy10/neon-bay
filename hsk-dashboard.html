@@ -11,6 +11,7 @@
     --bg:#0a0e14; --card:#121826; --line:rgba(148,163,184,.14); --line-strong:rgba(148,163,184,.26);
     --txt:#e8edf5; --mut:#94a3b8; --mut2:#64748b;
     --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --cyan:#22d3ee; --violet:#818cf8;
+    --teal:#2dd4bf; --pink:#f472b6; --slate:#94a3b8; --lime:#a3e635;
     --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     --r:16px;
@@ -21,8 +22,10 @@
   body {
     margin:0; color:var(--txt); font:14px/1.55 var(--sans); min-height:100vh;
     background:
-      radial-gradient(900px 380px at 50% -8%, rgba(34,211,238,.09), transparent 62%),
-      radial-gradient(760px 320px at 88% -4%, rgba(129,140,248,.08), transparent 60%),
+      radial-gradient(900px 380px at 50% -8%, rgba(34,211,238,.10), transparent 62%),
+      radial-gradient(760px 320px at 88% -4%, rgba(129,140,248,.09), transparent 60%),
+      radial-gradient(560px 300px at 96% 28%, rgba(244,114,182,.05), transparent 60%),
+      radial-gradient(720px 420px at 2% 108%, rgba(45,212,191,.07), transparent 60%),
       var(--bg);
   }
   ::selection { background:rgba(34,211,238,.28); }
@@ -37,21 +40,22 @@
     -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
     border-bottom:1px solid var(--line);
   }
+  header::after { content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:linear-gradient(90deg,#22d3ee,#818cf8 40%,#f472b6 70%,#34d399); opacity:.9; }
   .brand { display:flex; align-items:center; gap:12px; min-width:0; }
   .logo {
     flex:0 0 auto; width:38px; height:38px; border-radius:11px;
     display:grid; place-items:center; font-size:19px; font-weight:800; color:#06121a;
-    background:linear-gradient(135deg,#22d3ee 0%,#818cf8 55%,#c084fc 100%);
+    background:linear-gradient(135deg,#22d3ee 0%,#818cf8 45%,#e879f9 80%,#f472b6 100%);
     box-shadow:0 4px 16px -2px rgba(56,189,248,.45), inset 0 1px 0 rgba(255,255,255,.35);
   }
   .brand-text h1 { margin:0; font-size:19px; line-height:1.2; font-weight:750; letter-spacing:-.015em; }
-  .brand-text h1 .grad { background:linear-gradient(90deg,#22d3ee,#818cf8); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .brand-text h1 .grad { background:linear-gradient(90deg,#22d3ee,#a78bfa 55%,#f472b6); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .brand-text .sub { margin:1px 0 0; font-size:12px; color:var(--mut); }
   .chain-badge { margin-left:4px; }
   #status-line {
     margin-left:auto; display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap;
     font-size:12.5px; color:var(--mut); font-variant-numeric:tabular-nums;
-    background:rgba(148,163,184,.08); border:1px solid var(--line); border-radius:999px; padding:6px 12px;
+    background:rgba(34,211,238,.07); border:1px solid rgba(34,211,238,.30); border-radius:999px; padding:6px 12px;
   }
   @media (max-width:640px){ #status-line{ margin-left:0; } .chain-badge{ display:none; } }
 
@@ -60,9 +64,24 @@
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
   @media (max-width:860px){ .grid2{grid-template-columns:1fr;} }
   section {
+    --acc:#22d3ee; --acc-soft:rgba(34,211,238,.10); --acc-glow:rgba(34,211,238,.30);
     background:linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,0) 40%), var(--card);
-    border:1px solid var(--line); border-radius:var(--r); padding:18px 20px; box-shadow:var(--shadow);
+    border:1px solid var(--line); border-top:3px solid var(--acc); border-radius:var(--r); padding:18px 20px;
+    box-shadow:var(--shadow), 0 0 48px -24px var(--acc-glow);
   }
+  section h2::before { content:""; width:9px; height:9px; border-radius:3px; background:var(--acc); box-shadow:0 0 10px var(--acc); flex:0 0 auto; }
+  .sec-agent { --acc:#818cf8; --acc-soft:rgba(129,140,248,.10); --acc-glow:rgba(129,140,248,.35); }
+  .sec-signals { --acc:#22d3ee; --acc-soft:rgba(34,211,238,.10); --acc-glow:rgba(34,211,238,.35); }
+  .sec-positions { --acc:#34d399; --acc-soft:rgba(52,211,153,.10); --acc-glow:rgba(52,211,153,.35); }
+  .sec-risk { --acc:#fbbf24; --acc-soft:rgba(251,191,36,.10); --acc-glow:rgba(251,191,36,.35); }
+  .sec-vaults { --acc:#a78bfa; --acc-soft:rgba(167,139,250,.10); --acc-glow:rgba(167,139,250,.35); }
+  .sec-wallet { --acc:#2dd4bf; --acc-soft:rgba(45,212,191,.10); --acc-glow:rgba(45,212,191,.35); }
+  .sec-journal { --acc:#94a3b8; --acc-soft:rgba(148,163,184,.10); --acc-glow:rgba(148,163,184,.35); }
+  section .kv > div > b { color:var(--acc); }
+  section .kv > div { transition:border-color .2s ease, box-shadow .2s ease; }
+  section .kv > div:hover { border-color:var(--acc); box-shadow:0 0 20px -10px var(--acc-glow); }
+  section table th { background:var(--acc-soft); }
+  section .rationale { background:var(--acc-soft); }
   section h2 { margin:0 0 14px; font-size:14px; font-weight:650; letter-spacing:.02em; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   section h2 .tag { margin-left:auto; }
   section h2 .tag ~ .tag { margin-left:0; }
@@ -70,19 +89,20 @@
 
   /* ---- badges, pills, tags ---- */
   .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.05em; border:1px solid transparent; white-space:nowrap; }
-  .b-green { background:rgba(52,211,153,.13); color:var(--green); border-color:rgba(52,211,153,.32); }
-  .b-red { background:rgba(248,113,113,.13); color:var(--red); border-color:rgba(248,113,113,.32); }
-  .b-amber { background:rgba(251,191,36,.13); color:var(--amber); border-color:rgba(251,191,36,.32); }
-  .b-blue { background:rgba(96,165,250,.13); color:var(--blue); border-color:rgba(96,165,250,.32); }
+  .b-green { background:rgba(52,211,153,.20); color:var(--green); border-color:rgba(52,211,153,.45); }
+  .b-red { background:rgba(248,113,113,.20); color:var(--red); border-color:rgba(248,113,113,.45); }
+  .b-amber { background:rgba(251,191,36,.20); color:var(--amber); border-color:rgba(251,191,36,.45); }
+  .b-blue { background:rgba(96,165,250,.20); color:var(--blue); border-color:rgba(96,165,250,.45); }
   .b-grey { background:rgba(148,163,184,.13); color:var(--mut); border-color:rgba(148,163,184,.28); }
   .pill { display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:700; letter-spacing:.04em; border:1px solid transparent; white-space:nowrap; }
-  .pill.buy { background:rgba(52,211,153,.16); color:var(--green); border-color:rgba(52,211,153,.4); }
-  .pill.sell { background:rgba(248,113,113,.16); color:var(--red); border-color:rgba(248,113,113,.4); }
+  .pill.buy { background:rgba(52,211,153,.24); color:var(--green); border-color:rgba(52,211,153,.55); }
+  .pill.sell { background:rgba(248,113,113,.24); color:var(--red); border-color:rgba(248,113,113,.55); }
   .pill.none { background:rgba(148,163,184,.12); color:var(--mut); border-color:rgba(148,163,184,.28); }
+  .badge, .pill { box-shadow:0 0 12px -7px currentColor; }
   .tag { display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; letter-spacing:.07em; padding:3px 9px; border-radius:999px; border:1px solid var(--line-strong); background:rgba(148,163,184,.1); color:var(--mut); white-space:nowrap; }
-  .tag.live { background:rgba(52,211,153,.13); color:var(--green); border-color:rgba(52,211,153,.32); }
+  .tag.live { background:rgba(52,211,153,.20); color:var(--green); border-color:rgba(52,211,153,.45); }
   .tag.live::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2.2s ease-out infinite; }
-  .tag.snap { background:rgba(251,191,36,.11); color:var(--amber); border-color:rgba(251,191,36,.3); }
+  .tag.snap { background:rgba(251,191,36,.18); color:var(--amber); border-color:rgba(251,191,36,.42); }
   @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(52,211,153,.45);} 70%{box-shadow:0 0 0 7px rgba(52,211,153,0);} 100%{box-shadow:0 0 0 0 rgba(52,211,153,0);} }
 
   /* ---- stat tiles ---- */
@@ -138,7 +158,7 @@
   .err { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.3); color:#fecaca; padding:10px 12px; border-radius:10px; font-size:13px; }
   .mut { color:var(--mut); }
   .small { font-size:12.5px; }
-  .src-banner { background:linear-gradient(90deg, rgba(96,165,250,.13), rgba(34,211,238,.06)); border:1px solid rgba(96,165,250,.28); border-left:3px solid var(--blue); border-radius:12px; padding:12px 16px; font-size:13px; color:#c7d2fe; line-height:1.6; }
+  .src-banner { background:linear-gradient(90deg, rgba(96,165,250,.16), rgba(129,140,248,.10), rgba(34,211,238,.07)); border:1px solid rgba(96,165,250,.32); border-left:3px solid var(--blue); border-radius:12px; padding:12px 16px; font-size:13px; color:#c7d2fe; line-height:1.6; }
   .src-banner b { color:#e6eaf2; }
   footer { color:var(--mut2); font-size:12px; line-height:1.6; padding:16px 20px 28px; max-width:1160px; margin:0 auto; border-top:1px solid var(--line); }
 </style>
@@ -158,21 +178,21 @@
 <main>
   <div class="src-banner" id="src-banner">Loading data sources…</div>
 
-  <section id="agent-sec"><h2>Agent status <span class="tag snap">SNAPSHOT</span></h2><div id="agent">loading…</div></section>
+  <section id="agent-sec" class="sec-agent"><h2>Agent status <span class="tag snap">SNAPSHOT</span></h2><div id="agent">loading…</div></section>
 
-  <section><h2>Signals — Flow fee-3000 pools <span class="tag live">LIVE</span></h2><div id="markets">loading…</div></section>
+  <section class="sec-signals"><h2>Signals — Flow fee-3000 pools <span class="tag live">LIVE</span></h2><div id="markets">loading…</div></section>
 
   <div class="grid2">
-    <section><h2>Positions &amp; P&amp;L <span class="mut small">(paper / testnet)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="positions">loading…</div></section>
-    <section><h2>Risk caps <span class="tag live">LIVE</span> <span class="mut small">+</span> <span class="tag snap">SNAPSHOT</span></h2><div id="risk">loading…</div></section>
+    <section class="sec-positions"><h2>Positions &amp; P&amp;L <span class="mut small">(paper / testnet)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="positions">loading…</div></section>
+    <section class="sec-risk"><h2>Risk caps <span class="tag live">LIVE</span> <span class="mut small">+</span> <span class="tag snap">SNAPSHOT</span></h2><div id="risk">loading…</div></section>
   </div>
 
   <div class="grid2">
-    <section><h2>PolicyVaults <span class="tag snap">SNAPSHOT</span></h2><div id="vaults">loading…</div></section>
-    <section><h2>Wallet — burner <span class="tag live">LIVE</span></h2><div id="balances">loading…</div></section>
+    <section class="sec-vaults"><h2>PolicyVaults <span class="tag snap">SNAPSHOT</span></h2><div id="vaults">loading…</div></section>
+    <section class="sec-wallet"><h2>Wallet — burner <span class="tag live">LIVE</span></h2><div id="balances">loading…</div></section>
   </div>
 
-  <section><h2>Decision journal <span class="mut small">(hash-chained)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="journal">loading…</div></section>
+  <section class="sec-journal"><h2>Decision journal <span class="mut small">(hash-chained)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="journal">loading…</div></section>
 </main>
 <footer>Neon Trader — HSK Chain Horizon Hackathon, Track 1 (AI Agent Trading). On-chain data (pool prices, oracle, balances, allowances) is fetched live from the HSK testnet RPC in your browser and refreshes every 15s. Agent state, positions, risk-cap usage, vaults and the journal are a snapshot taken when this page was published — re-publish to refresh them. Trades execute through the PolicyVault (Day 4) after the user deploys it; the agent never holds a signing key in this workspace.</footer>
 <script>
