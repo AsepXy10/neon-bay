@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Trader — HSK Testnet Dashboard (static)</title>
+<style>
+  :root { --bg:#0b0e14; --card:#141926; --card2:#1a2033; --line:#26304a; --txt:#e6eaf2; --mut:#8b93a7; --green:#34d399; --red:#f87171; --amber:#fbbf24; --blue:#60a5fa; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:8px 20px; align-items:baseline; }
+  header h1 { margin:0; font-size:20px; }
+  header .sub { color:var(--mut); font-size:13px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+  .b-green { background:#064e3b; color:var(--green); } .b-red { background:#450a0a; color:var(--red); }
+  .b-amber { background:#451a03; color:var(--amber); } .b-blue { background:#172554; color:var(--blue); }
+  .b-grey { background:#1f2937; color:var(--mut); }
+  main { padding:16px 20px 40px; display:grid; gap:16px; max-width:1200px; margin:0 auto; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:800px){ .grid2{grid-template-columns:1fr;} }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  section h2 { margin:0 0 10px; font-size:15px; letter-spacing:.02em; }
+  .kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px 16px; }
+  .kv div b { display:block; font-size:12px; color:var(--mut); font-weight:500; }
+  .kv div span { font-size:15px; }
+  .mono { font-family:var(--mono); font-size:12.5px; word-break:break-all; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:500; font-size:12px; }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pos { color:var(--green); } .neg { color:var(--red); }
+  .pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; }
+  .pill.buy { background:#064e3b; color:var(--green); } .pill.sell { background:#450a0a; color:var(--red); }
+  .pill.none { background:#1f2937; color:var(--mut); }
+  details { margin-top:4px; } summary { cursor:pointer; color:var(--blue); font-size:12.5px; }
+  .rationale { font-size:12.5px; color:var(--mut); white-space:pre-wrap; word-break:break-word; }
+  .cap { display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .cap:last-child { border-bottom:0; }
+  .cap .cname { color:var(--mut); font-size:13px; } .cap .cname small { display:block; color:#5b6376; font-size:11.5px; }
+  .err { background:#450a0a; color:#fecaca; padding:8px 10px; border-radius:8px; font-size:13px; }
+  .mut { color:var(--mut); } .small { font-size:12.5px; }
+  footer { color:var(--mut); font-size:12px; padding:0 20px 20px; max-width:1200px; margin:0 auto; }
+  #status-line { margin-left:auto; font-size:12.5px; color:var(--mut); }
+  .src-banner { background:#172554; border:1px solid #26304a; border-radius:12px; padding:10px 16px; font-size:13px; color:#c7d2fe; }
+  .src-banner b { color:#e6eaf2; }
+  .tag { font-size:11px; font-weight:600; padding:1px 6px; border-radius:999px; background:#1f2937; color:var(--mut); vertical-align:middle; }
+  .tag.live { background:#064e3b; color:var(--green); }
+  .tag.snap { background:#451a03; color:var(--amber); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Neon Trader <span class="badge b-blue">HSK TESTNET · chain 133</span></h1>
+  <span class="sub">AI agent trading — read-only dashboard (no trades, no signatures)</span>
+  <span id="status-line">loading…</span>
+</header>
+<main>
+  <div class="src-banner" id="src-banner">Loading data sources…</div>
+
+  <section id="agent-sec"><h2>Agent status <span class="tag snap">SNAPSHOT</span></h2><div id="agent">loading…</div></section>
+
+  <section><h2>Signals — Flow fee-3000 pools <span class="tag live">LIVE</span></h2><div id="markets">loading…</div></section>
+
+  <div class="grid2">
+    <section><h2>Positions &amp; P&amp;L <span class="mut small">(paper / testnet)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="positions">loading…</div></section>
+    <section><h2>Risk caps <span class="tag live">LIVE</span> + <span class="tag snap">SNAPSHOT</span></h2><div id="risk">loading…</div></section>
+  </div>
+
+  <div class="grid2">
+    <section><h2>PolicyVaults <span class="tag snap">SNAPSHOT</span></h2><div id="vaults">loading…</div></section>
+    <section><h2>Wallet — burner <span class="tag live">LIVE</span></h2><div id="balances">loading…</div></section>
+  </div>
+
+  <section><h2>Decision journal <span class="mut small">(hash-chained)</span> <span class="tag snap">SNAPSHOT</span></h2><div id="journal">loading…</div></section>
+</main>
+<footer>Neon Trader — HSK Chain Horizon Hackathon, Track 1 (AI Agent Trading). On-chain data (pool prices, oracle, balances, allowances) is fetched live from the HSK testnet RPC in your browser and refreshes every 15s. Agent state, positions, risk-cap usage, vaults and the journal are a snapshot taken when this page was published — re-publish to refresh them. Trades execute through the PolicyVault (Day 4) after the user deploys it; the agent never holds a signing key in this workspace.</footer>
+
+<script>
+'use strict';
+/* =====================================================================
+   Neon Trader — STATIC dashboard for GitHub Pages (Day 5, static build)
+   No build step, no CDN, no dependencies. Vanilla JS + inline CSS.
+   Live data: JSON-RPC batch to https://testnet.hsk.xyz (CORS: * — verified
+   28 Nov 2026) + testnet subgraph (CORS: * — verified). The decision
+   pipeline below is a faithful port of src/decision.ts, src/signals.ts,
+   src/risk.ts and src/supra.ts — same thresholds, same rationale text.
+   Off-chain state (agent state, positions, journal, vaults) cannot be
+   fetched from a static page, so it is embedded as SNAPSHOT below.
+   ===================================================================== */
+
+// ---- embedded snapshot (agent state, positions, caps usage, vaults, journal) ----
+const SNAPSHOT = {"generatedAt":"2026-11-28T02:22:28.807Z","collectMs":4048,"network":{"chainId":133,"name":"HSK Chain Testnet","blockNumber":"36322945","rpc":"https://testnet.hsk.xyz","explorer":"https://testnet-explorer.hskchain.net"},"agent":{"address":"0x27Fd42D8052DFaF83218D36aa61711eB3c6fE8f8","mode":"on-demand cycle (no daemon — run `npm run day3`)","epochDay":"2026-11-28","lastCycleAt":"2026-11-28T02:15:38.338Z","tradesToday":0,"epochSpendUsd":0,"realizedPnlTodayUsd":0,"lastTradeAtMs":0},"balances":{"tHsk":"0.099395630233997611","tUsdt":"1000","tWbtc":"0.01","tWhsk":"10000","routerAllowances":{"tUsdt":"0","tWbtc":"0","tWhsk":"0"},"router":"0xa6914E66690c6794244B5f66a09eAEbf66254237"},"markets":[{"label":"WHSK/USDT","pair":"tWHSK/tUSDT","pool":"0x840fa6e439F52cEa60dABec8BBB820DE80dDb542","fee":3000,"spot":0.08688535771596448,"twap5m":0.08688453729472707,"twap1h":0.08688453729472707,"gapBps":0,"tick":-300757,"twapTick5m":-300757,"liquidity":"744097250641454677","impactBps":-34.52999999999928,"execPrice":0.08658534257577126,"candidateSizeUsd":100,"oracle":{"price":0.08132,"ageSec":341080,"fresh":false,"populated":true,"adapterPrice":0.08132,"adapterAgeSec":341080,"adapterDescription":"HSK/USD (Supra testnet pair 517)","deviationBps":684.3774859769392},"decision":{"direction":"none","sizeUsd":0,"expectedEdgeBps":0,"rationale":"tWHSK/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 0.086885, 5m TWAP 0.086885, gap 0 bps)","rationaleHash":"0x32e34f634cda0f0073c31c5b0bd0e4b8281a26cad19c883a4f6ceec9ebb2f4b5","checks":{"gap":"gap 0 bps (threshold 150)","impact":"quoter impact -34.5 bps (cap 50)","oracle":"","risk":"","balance":""}},"stops":[]},{"label":"WBTC/USDT","pair":"tWBTC/tUSDT","pool":"0x9d6A06ae873aD5d34ef13Ac8afE3BA80d1A5eF07","fee":3000,"spot":77178.13247688186,"twap5m":77175.53318683572,"twap1h":77175.53318683572,"gapBps":0,"tick":66490,"twapTick5m":66490,"liquidity":"1783701361","impactBps":-50.04157202655235,"execPrice":76791.92096936019,"candidateSizeUsd":100,"oracle":{"price":60291.850000000006,"ageSec":341080,"fresh":false,"populated":true,"adapterPrice":60291.85,"adapterAgeSec":341081,"adapterDescription":"BTC/USD (Supra testnet pair 0)","deviationBps":2800.7570636631394},"decision":{"direction":"none","sizeUsd":0,"expectedEdgeBps":0,"rationale":"tWBTC/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 77178.132477, 5m TWAP 77175.533187, gap 0 bps)","rationaleHash":"0xe37ce7a0b2e4ab5b05348c4c84aa99788f72df0c7e987da656e395c71cadc5e3","checks":{"gap":"gap 0 bps (threshold 150)","impact":"quoter impact -50.0 bps (cap 50)","oracle":"","risk":"","balance":""}},"stops":[]}],"positions":[],"pnl":{"realizedTodayUsd":0,"unrealizedUsd":0,"totalUsd":0},"risk":{"limits":{"maxTradeUsd":100,"maxEpochUsd":250,"maxExposureUsd":150,"maxSlippageBps":250,"maxOracleDeviationBps":250,"maxOracleAgeSec":90000,"cooldownSec":60,"dailyLossCapUsd":50,"stopLossBps":150,"takeProfitBps":300},"caps":[{"id":"maxTrade","name":"Max trade","limit":100,"current":null,"unit":"tUSDT","status":"ok","detail":"per-trade cap"},{"id":"maxEpoch","name":"Max epoch spend","limit":250,"current":0,"unit":"tUSDT","status":"ok","detail":"epoch 2026-11-28"},{"id":"maxExposure","name":"Max exposure","limit":150,"current":0,"unit":"tUSDT","status":"ok","detail":"0 open position(s)"},{"id":"dailyLoss","name":"Daily loss breaker","limit":50,"current":0,"unit":"tUSDT","status":"ok","detail":"realised PnL today; breaker at -50"},{"id":"slippage","name":"Max slippage","limit":250,"current":null,"unit":"bps","status":"ok","detail":"oracle-anchored amountOutMinimum"},{"id":"oracleDev","name":"Max oracle deviation","limit":250,"current":2800.7570636631394,"unit":"bps","status":"ok","detail":"worst pool vs oracle now"},{"id":"oracleAge","name":"Max oracle age","limit":90000,"current":341080,"unit":"s","status":"ok","detail":"oldest oracle feed now"},{"id":"cooldown","name":"Trade cooldown","limit":60,"current":0,"unit":"s left","status":"ok","detail":"no trades yet"},{"id":"stopLoss","name":"Stop-loss","limit":150,"current":null,"unit":"bps","status":"ok","detail":"dual-confirmation (spot AND 5m TWAP)"},{"id":"takeProfit","name":"Take-profit","limit":300,"current":null,"unit":"bps","status":"ok","detail":"dual-confirmation (spot AND 5m TWAP)"}]},"vaults":[{"market":"WHSK/USDT","deployed":false,"address":null,"note":"Not deployed yet — user step (Remix + MetaMask, see scripts/deploy-prep.ts). Agent runs off-chain caps until then."},{"market":"WBTC/USDT","deployed":false,"address":null,"note":"Not deployed yet — user step (Remix + MetaMask, see scripts/deploy-prep.ts). Agent runs off-chain caps until then."}],"journal":{"entries":14,"valid":true,"firstBadIndex":null,"tail":[{"ts":"2026-11-28T02:15:38.338Z","kind":"decision","market":"WBTC/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWBTC/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 77178.132477, 5m TWAP 77175.533187, gap 0 bps)","rationaleHash":"c4508e54b2f62ba4f71a0d480383647e007abc217af2de07d61e6ea6a21f53cd","prevHash":"1fa0eae1863d058a11811ad374a44842134b16e1c3f9e9bc503577c5a9661996","hash":"24bf9c77d33448d4b0390b7566fd10f55fd70e071912ef9d21809c5e45774536"},{"ts":"2026-11-28T02:15:36.910Z","kind":"decision","market":"WHSK/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWHSK/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 0.086885, 5m TWAP 0.086885, gap 0 bps)","rationaleHash":"7d5ef89094cf2e1eb1cca128d16daa152b10b01f3f605dcc3eb7973a24672e4b","prevHash":"ae30afbc044c60e8d718e2139ebc0d65ebe9cac93eeee9008ca4d33f122d0a0a","hash":"1fa0eae1863d058a11811ad374a44842134b16e1c3f9e9bc503577c5a9661996"},{"kind":"vault-trade","market":"WHSK/USDT","direction":"buy","sizeUsd":10,"note":"fork test: oracle-anchored buy","ts":"2026-11-27T09:02:34.327Z","rationaleHash":"983a9528c8a073ea71fbd2bf8ce8ecd3bc25504f7450bfbcec67ab9c7b8c110e","prevHash":"2480581cdff22fdbda2deb00708720bb20f6ff1fbf3d2a140ac4e43c528cb352","hash":"ae30afbc044c60e8d718e2139ebc0d65ebe9cac93eeee9008ca4d33f122d0a0a"},{"kind":"vault-trade","market":"WHSK/USDT","direction":"buy","sizeUsd":10,"note":"fork test: oracle-anchored buy","ts":"2026-11-27T09:01:26.579Z","rationaleHash":"51286fe9e1f188c8500f7fbe23fb9c81f8ea62ba33a11e96660afd9887581101","prevHash":"6843355e288a003258bcd400768f8fc3a43db6b4dfb311405d5d1fb19c5a06f2","hash":"2480581cdff22fdbda2deb00708720bb20f6ff1fbf3d2a140ac4e43c528cb352"},{"kind":"vault-trade","market":"WHSK/USDT","direction":"buy","sizeUsd":10,"note":"fork test: oracle-anchored buy","ts":"2026-11-27T08:53:21.536Z","rationaleHash":"2c19a1b893d1acda41729ab14b1179f362f0b34aca40d9e4b51110199169dc2b","prevHash":"ab4e9a0ac8e638b17fe9f331ce78dade93d0d32dcc201e563a156e409ef76189","hash":"6843355e288a003258bcd400768f8fc3a43db6b4dfb311405d5d1fb19c5a06f2"},{"kind":"vault-trade","market":"WHSK/USDT","direction":"buy","sizeUsd":10,"note":"fork test: oracle-anchored buy","ts":"2026-11-27T08:51:07.193Z","rationaleHash":"12c1224d08bbe46e4ff91fb21545fc22145e774906e1a0ac31ff1b1a840ec2fe","prevHash":"d73d6a46eff9de390529dc960102ca39110fc600f30a4544f11109623ed66618","hash":"ab4e9a0ac8e638b17fe9f331ce78dade93d0d32dcc201e563a156e409ef76189"},{"ts":"2026-11-24T03:30:20.425Z","kind":"decision","market":"WBTC/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWBTC/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 77255.751463, 5m TWAP 77252.743458, gap 0 bps)","rationaleHash":"7b1583a39644246a3fa77f63c427710e5108247f933d5ad15212981ceacf9d41","prevHash":"7e349e89a8e780acd146f854ed7835490286f9b4c5e761bb9d4d21ae08e39ff0","hash":"d73d6a46eff9de390529dc960102ca39110fc600f30a4544f11109623ed66618"},{"ts":"2026-11-24T03:30:18.960Z","kind":"decision","market":"WHSK/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWHSK/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 0.086893, 5m TWAP 0.086885, gap 0 bps)","rationaleHash":"b014148cc87ad740b0a4fdf6858690ba90b825427194820771a9e71f9035f08b","prevHash":"ed4c6f3be28deed16aa48c636792f93de301580c143250549070ed15d9d8d2ec","hash":"7e349e89a8e780acd146f854ed7835490286f9b4c5e761bb9d4d21ae08e39ff0"},{"ts":"2026-11-24T03:29:48.805Z","kind":"decision","market":"WBTC/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWBTC/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 77255.751463, 5m TWAP 77252.743458, gap 0 bps)","rationaleHash":"721a2d01d24938e6bd6b4d6bc32bf0c842125e86e0c10554b3146f9973db9663","prevHash":"0e76e617e3596938708cccca7655d6f7c6ba2244f2c219a275bae47f5af48307","hash":"ed4c6f3be28deed16aa48c636792f93de301580c143250549070ed15d9d8d2ec"},{"ts":"2026-11-24T03:29:47.389Z","kind":"decision","market":"WHSK/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWHSK/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 0.086893, 5m TWAP 0.086885, gap 0 bps)","rationaleHash":"1a2da4a6716358219d0943b297b532bd4f604b0ea646b3a355b7db4dd763f92f","prevHash":"327436d3779eb78e8b77b58bb6c5c24774096cf8801f1736a8262c274b428f28","hash":"0e76e617e3596938708cccca7655d6f7c6ba2244f2c219a275bae47f5af48307"},{"ts":"2026-11-24T03:29:20.440Z","kind":"decision","market":"WBTC/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWBTC/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 77255.751463, 5m TWAP 77252.743458, gap 0 bps)","rationaleHash":"934f34d16817a7322c7a874efca315be5e40ba56bc9e02500753f5a11af4eaad","prevHash":"0198a7310dcb760f0cd1138b666bc4fdd471185b5dd9ebdc42cf906124d7aa15","hash":"327436d3779eb78e8b77b58bb6c5c24774096cf8801f1736a8262c274b428f28"},{"ts":"2026-11-24T03:29:18.987Z","kind":"decision","market":"WHSK/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWHSK/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 0.086893, 5m TWAP 0.086885, gap 0 bps)","rationaleHash":"428e41b623f70cab03469289887c37497efc12b99106825a2abd19f6a3f12cb5","prevHash":"9d3db21b3de0c5f5a8a8716260ee701c77a2fb5b8ea00813ec6c3dc8720d2176","hash":"0198a7310dcb760f0cd1138b666bc4fdd471185b5dd9ebdc42cf906124d7aa15"},{"ts":"2026-11-24T03:25:07.353Z","kind":"decision","market":"WBTC/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWBTC/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 77255.751463, 5m TWAP 77252.743458, gap 0 bps)","rationaleHash":"cdf3054804987f98e1108d7fd8ff8a61a1e828442a803fc653b9f7171d8405af","prevHash":"7e5f71eed71795d308817727016e60e08c243919f4276b3e9409dc193255d42e","hash":"9d3db21b3de0c5f5a8a8716260ee701c77a2fb5b8ea00813ec6c3dc8720d2176"},{"ts":"2026-11-24T03:25:06.013Z","kind":"decision","market":"WHSK/USDT","direction":"none","sizeUsd":0,"edgeBps":0,"rationale":"tWHSK/tUSDT: NO TRADE — gap 0 bps < 150 bps threshold (spot 0.086893, 5m TWAP 0.086885, gap 0 bps)","rationaleHash":"47335ce7e2479aa6b87cb53bc14b0127d6d64c74a39dc2ae0f21d25274d47e95","prevHash":"0000000000000000000000000000000000000000000000000000000000000000","hash":"7e5f71eed71795d308817727016e60e08c243919f4276b3e9409dc193255d42e"}]}};
+
+// ---- constants (from src/addresses.ts, src/chains.ts, src/supra.ts) ----
+const RPC_URL = 'https://testnet.hsk.xyz';
+const SUBGRAPH_URL = 'https://graphnode-testnet.hashkeychain.net/subgraphs/name/uniswap-v3/hsk-test';
+const EXPLORER = 'https://testnet-explorer.hskchain.net';
+const AGENT = '0x27Fd42D8052DFaF83218D36aa61711eB3c6fE8f8';
+const ROUTER = '0xa6914E66690c6794244B5f66a09eAEbf66254237';
+const QUOTER = '0x73820d9eE5Bf1BfcD429580320FC7A374E8fa1cC';
+const SUPRA_STORAGE = '0x6Cd59830AAD978446e6cc7f6cc173aF7656Fb917';
+const SUPRA_PAIRS = { BTC: 0, HSK: 517 };
+const TOKENS = {
+  tUsdt: { addr: '0xD57a8171b83E154145f47DcE512786173a9A36ca', dec: 6 },
+  tWbtc: { addr: '0x2C7A171A58AE1690Cf1e01e296aB0CF9Dfc04aA2', dec: 8 },
+  tWhsk: { addr: '0x198c3EC5530463290e2F16988Bf6B8006F4C6995', dec: 18 },
+};
+const MARKETS = [
+  { label: 'WHSK/USDT', pair: 'tWHSK/tUSDT', pool: '0x840fa6e439F52cEa60dABec8BBB820DE80dDb542',
+    base: TOKENS.tWhsk.addr, quote: TOKENS.tUsdt.addr, baseDec: 18, quoteDec: 6, fee: 3000,
+    baseIsToken0: true, dec0: 18, dec1: 6, oraclePair: SUPRA_PAIRS.HSK,
+    adapter: '0xeCC8Fe21c7C0D39988856b6B67860bAe55A8c9A2' },
+  { label: 'WBTC/USDT', pair: 'tWBTC/tUSDT', pool: '0x9d6A06ae873aD5d34ef13Ac8afE3BA80d1A5eF07',
+    base: TOKENS.tWbtc.addr, quote: TOKENS.tUsdt.addr, baseDec: 8, quoteDec: 6, fee: 3000,
+    baseIsToken0: true, dec0: 8, dec1: 6, oraclePair: SUPRA_PAIRS.BTC,
+    adapter: '0x9bbb840B9e1086177507D958E40668f3cEF99372' },
+];
+// Agent state below is rebuilt from the embedded snapshot each refresh.
+const LIMITS = {
+  maxTradeUsd: 100, maxEpochUsd: 250, maxExposureUsd: 150, maxSlippageBps: 250,
+  maxOracleDeviationBps: 250, maxOracleAgeSec: 90000, cooldownSec: 60,
+  dailyLossCapUsd: 50, stopLossBps: 150, takeProfitBps: 300,
+};
+
+// ---- tiny utils ----
+const $ = (id) => document.getElementById(id);
+const fmt = (n, d = 2) => (n === null || n === undefined || !isFinite(n)) ? '—' : Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtInt = (n) => (n === null || n === undefined) ? '—' : Number(n).toLocaleString('en-US');
+const short = (h) => h ? h.slice(0, 10) + '…' + h.slice(-6) : '—';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---- keccak-256 (original Keccak padding, NOT SHA3) ----
+// Verified against viem keccak256 on '', 'abc', a real rationale string and
+// a 300-char multi-block input (28 Nov 2026). Needed so the live decision's
+// rationaleHash matches src/decision.ts exactly.
+const KC_RC = [0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n, 0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n, 0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an, 0x000000008000808bn, 0x800000000000008bn, 0x8000000000008089n, 0x8000000000008003n, 0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an, 0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n];
+const KC_ROTC = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14, 27, 41, 56, 8, 25, 43, 62, 18, 39, 61, 20, 44];
+const KC_PILN = [10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4, 15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1];
+const MASK64 = (1n << 64n) - 1n;
+const rotl64 = (x, n) => ((x << BigInt(n)) | (x >> BigInt(64 - n))) & MASK64;
+function keccakF(s) {
+  for (let round = 0; round < 24; round++) {
+    const C = [], D = [];
+    for (let x = 0; x < 5; x++) C[x] = s[x] ^ s[x + 5] ^ s[x + 10] ^ s[x + 15] ^ s[x + 20];
+    for (let x = 0; x < 5; x++) D[x] = C[(x + 4) % 5] ^ rotl64(C[(x + 1) % 5], 1);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) s[x + 5 * y] ^= D[x];
+    let t = s[1];
+    for (let i = 0; i < 24; i++) { const j = KC_PILN[i]; const b = s[j]; s[j] = rotl64(t, KC_ROTC[i]); t = b; }
+    for (let y = 0; y < 5; y++) {
+      const row = [s[5 * y], s[5 * y + 1], s[5 * y + 2], s[5 * y + 3], s[5 * y + 4]];
+      for (let x = 0; x < 5; x++) s[5 * y + x] = (row[x] ^ ((~row[(x + 1) % 5] & MASK64) & row[(x + 2) % 5])) & MASK64;
+    }
+    s[0] ^= KC_RC[round];
+  }
+}
+function keccak256Hex(msg) {
+  const bytes = new TextEncoder().encode(msg);
+  const rate = 136, s = new Array(25).fill(0n);
+  let off = 0;
+  while (off + rate <= bytes.length) {
+    for (let i = 0; i < rate / 8; i++) {
+      let lane = 0n;
+      for (let b = 0; b < 8; b++) lane |= BigInt(bytes[off + i * 8 + b]) << BigInt(8 * b);
+      s[i] ^= lane;
+    }
+    keccakF(s); off += rate;
+  }
+  const rem = bytes.length - off;
+  const block = new Uint8Array(rate);
+  block.set(bytes.subarray(off));
+  block[rem] ^= 0x01;
+  block[rate - 1] ^= 0x80;
+  for (let i = 0; i < rate / 8; i++) {
+    let lane = 0n;
+    for (let b = 0; b < 8; b++) lane |= BigInt(block[i * 8 + b]) << BigInt(8 * b);
+    s[i] ^= lane;
+  }
+  keccakF(s);
+  let out = '';
+  for (let i = 0; i < 4; i++) for (let b = 0; b < 8; b++) out += Number((s[i] >> BigInt(8 * b)) & 0xffn).toString(16).padStart(2, '0');
+  return '0x' + out;
+}
+
+// ---- ABI encode / decode helpers (hand-rolled; encoder output verified
+// byte-identical to viem encodeFunctionData, 28 Nov 2026) ----
+const padAddr = (a) => '0x' + '0'.repeat(24) + a.slice(2).toLowerCase();
+const padU256 = (n) => '0x' + BigInt(n).toString(16).padStart(64, '0');
+const SEL = {
+  slot0: '0x3850c7bd', observe: '0x883bdbfd', liquidity: '0x1a686502',
+  quote: '0xc6a5026a', getSvalue: '0x89b94ea2', latestRoundData: '0xfeaf968c',
+  description: '0x7284e416', pairIndex: '0xb32c7af2',
+  balanceOf: '0x70a08231', allowance: '0xdd62ed3e',
+};
+const encObserve = (secs) => SEL.observe + padU256(32).slice(2) + padU256(secs.length).slice(2) + secs.map((s) => padU256(s).slice(2)).join('');
+const encQuote = (tokenIn, tokenOut, amountIn, fee) => SEL.quote + padAddr(tokenIn).slice(2) + padAddr(tokenOut).slice(2) + padU256(amountIn).slice(2) + padU256(fee).slice(2) + padU256(0).slice(2);
+const wordAt = (hex, i) => BigInt('0x' + hex.slice(2 + i * 64, 2 + (i + 1) * 64));
+const signed = (v, bits) => { const m = (1n << BigInt(bits)) - 1n; const x = v & m; return x >= (1n << BigInt(bits - 1)) ? x - (1n << BigInt(bits)) : x; };
+function decodeDynUints(hex, idx) {
+  const off = Number(wordAt(hex, idx)) / 32;
+  const len = Number(wordAt(hex, off));
+  return Array.from({ length: len }, (_, i) => wordAt(hex, off + 1 + i));
+}
+function decodeString(hex) {
+  const off = Number(wordAt(hex, 0)) / 32;
+  const len = Number(wordAt(hex, off));
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = Number((wordAt(hex, off + 1 + Math.floor(i / 32)) >> BigInt(8 * (31 - (i % 32)))) & 0xffn);
+  return new TextDecoder().decode(bytes);
+}
+const priceFromSqrt = (sqrt, dec0, dec1) => { const r = Number(sqrt) / 2 ** 96; return r * r * 10 ** (dec0 - dec1); };
+const twapPriceFromTick = (twapTick, dec0, dec1) => 1.0001 ** twapTick * 10 ** (dec0 - dec1);
+
+// ---- decision pipeline — faithful port of src/decision.ts, src/signals.ts,
+// src/risk.ts, src/supra.ts (same thresholds, same rationale text) ----
+function tickGapBps(spotTick, twapTick) { return spotTick - twapTick; }
+function evaluate(snapshot, pair, minGapBps = 150) {
+  const gap = tickGapBps(snapshot.tick, snapshot.twapTick5m);
+  if (Math.abs(gap) < minGapBps) return { pool: snapshot.pool, pair, spotVsTwapBps: gap, direction: 'none', reason: `gap ${gap} bps < ${minGapBps} bps threshold` };
+  return { pool: snapshot.pool, pair, spotVsTwapBps: gap, direction: gap > 0 ? 'sell' : 'buy', reason: `spot ${Math.abs(gap)} bps ${gap > 0 ? 'above' : 'below'} 5m TWAP — mean-reversion candidate` };
+}
+function evaluateWithQuote(snapshot, pair, quoteImpactBps, minGapBps = 150, maxImpactBps = 50) {
+  const base = evaluate(snapshot, pair, minGapBps);
+  if (base.direction === 'none') return base;
+  if (Math.abs(quoteImpactBps) >= maxImpactBps) return { pool: snapshot.pool, pair, spotVsTwapBps: base.spotVsTwapBps, direction: 'none', reason: `gap ${base.spotVsTwapBps} bps clears threshold but quoter impact ${quoteImpactBps.toFixed(1)} bps >= ${maxImpactBps} bps cap — abstain` };
+  return { ...base, reason: `${base.reason}; quoter impact ${quoteImpactBps.toFixed(1)} bps < ${maxImpactBps} bps cap` };
+}
+function oracleDeviationBps(poolPrice, oraclePrice) {
+  if (oraclePrice <= 0) return Number.POSITIVE_INFINITY;
+  return Math.abs(poolPrice / oraclePrice - 1) * 10000;
+}
+function oracleGate(poolPrice, oraclePrice, ageSec, maxDeviationBps = 250, maxAgeSec = 90000) {
+  if (oraclePrice <= 0) return { pass: false, reason: 'oracle price is 0 / pair unpopulated' };
+  if (ageSec > maxAgeSec) return { pass: false, reason: `oracle stale: age ${Math.round(ageSec)}s > ${maxAgeSec}s` };
+  const dev = oracleDeviationBps(poolPrice, oraclePrice);
+  if (dev > maxDeviationBps) return { pass: false, reason: `pool ${dev.toFixed(1)} bps from oracle > ${maxDeviationBps} bps cap` };
+  return { pass: true, reason: `oracle fresh (age ${Math.round(ageSec)}s), pool ${dev.toFixed(1)} bps from oracle` };
+}
+function checkTradeLimits(state, sizeUsd, newExposureUsd) {
+  if (state.realizedPnlTodayUsd <= -LIMITS.dailyLossCapUsd) return { ok: false, reason: `daily loss breaker: realised PnL today ${state.realizedPnlTodayUsd.toFixed(2)} <= -${LIMITS.dailyLossCapUsd} — no new trades until tomorrow (UTC)` };
+  if (sizeUsd > LIMITS.maxTradeUsd) return { ok: false, reason: `size ${sizeUsd.toFixed(2)} > maxTrade ${LIMITS.maxTradeUsd}` };
+  if (state.epochSpendUsd + sizeUsd > LIMITS.maxEpochUsd) return { ok: false, reason: `epoch spend ${state.epochSpendUsd.toFixed(2)} + ${sizeUsd.toFixed(2)} > maxEpoch ${LIMITS.maxEpochUsd}` };
+  if (newExposureUsd > LIMITS.maxExposureUsd) return { ok: false, reason: `exposure ${newExposureUsd.toFixed(2)} > maxExposure ${LIMITS.maxExposureUsd}` };
+  const sinceLast = (Date.now() - state.lastTradeAtMs) / 1000;
+  if (state.lastTradeAtMs > 0 && sinceLast < LIMITS.cooldownSec) return { ok: false, reason: `cooldown: last trade ${Math.round(sinceLast)}s ago < ${LIMITS.cooldownSec}s` };
+  return { ok: true, reason: 'limits pass' };
+}
+function checkStops(positions, spotPrice, twapPrice) {
+  const out = [];
+  for (const p of positions) {
+    const pastStop = (price) => price <= p.stopPrice;
+    const pastTp = (price) => price >= p.takeProfitPrice;
+    if (pastStop(spotPrice) && pastStop(twapPrice)) out.push({ position: p, reason: `STOP: spot ${spotPrice} and 5m TWAP ${twapPrice} both past stop ${p.stopPrice}` });
+    else if (pastTp(spotPrice) && pastTp(twapPrice)) out.push({ position: p, reason: `TAKE-PROFIT: spot ${spotPrice} and 5m TWAP ${twapPrice} both past TP ${p.takeProfitPrice}` });
+  }
+  return out;
+}
+function decide(market, inp) {
+  const { snapshot, state } = inp;
+  const spot = market.baseIsToken0 ? snapshot.spotPrice : 1 / snapshot.spotPrice;
+  const twap = (() => { const p = twapPriceFromTick(snapshot.twapTick5m, market.dec0, market.dec1); return market.baseIsToken0 ? p : 1 / p; })();
+  const gapBps = snapshot.tick - snapshot.twapTick5m;
+  const checks = { gap: '', impact: '', oracle: '', risk: '', balance: '' };
+  const none = (reason, extra = {}) => {
+    const rationale = `${market.pair}: NO TRADE — ${reason} (spot ${spot.toFixed(6)}, 5m TWAP ${twap.toFixed(6)}, gap ${gapBps} bps)`;
+    return { market: market.label, pair: market.pair, direction: 'none', sizeBase: 0n, sizeUsd: 0, expectedEdgeBps: 0, rationale, rationaleHash: keccak256Hex(rationale), checks, ...extra };
+  };
+  const cand = evaluateWithQuote(snapshot, market.pair, inp.impactBps);
+  checks.gap = `gap ${gapBps} bps (threshold 150)`;
+  checks.impact = `quoter impact ${inp.impactBps.toFixed(1)} bps (cap 50)`;
+  if (cand.direction === 'none') return none(cand.reason);
+  const og = oracleGate(spot, inp.oraclePrice, inp.oracleAgeSec);
+  checks.oracle = og.reason;
+  if (!og.pass) return none(`oracle gate failed: ${og.reason}`);
+  const open = state.positions.filter((p) => p.market === market.label);
+  const currentExposure = open.reduce((s, p) => s + p.sizeUsd, 0);
+  const direction = cand.direction;
+  let sizeUsd = Math.min(LIMITS.maxTradeUsd, LIMITS.maxEpochUsd - state.epochSpendUsd, direction === 'buy' ? LIMITS.maxExposureUsd - currentExposure : Number.POSITIVE_INFINITY);
+  if (direction === 'buy') {
+    const quoteHuman = Number(inp.quoteBalance) / 10 ** market.quoteDec;
+    sizeUsd = Math.min(sizeUsd, quoteHuman);
+    checks.balance = `quote balance ${quoteHuman.toFixed(2)} tUSDT`;
+  } else {
+    const baseHuman = Number(inp.baseBalance) / 10 ** market.baseDec;
+    const heldUsd = open.reduce((s, p) => s + p.sizeUsd, 0);
+    if (open.length === 0) return none('sell signal but no open long position to close');
+    sizeUsd = Math.min(sizeUsd, baseHuman * spot, heldUsd);
+    checks.balance = `base balance ${baseHuman.toFixed(6)} (${(baseHuman * spot).toFixed(2)} tUSDT), open long ${heldUsd.toFixed(2)} tUSDT`;
+  }
+  if (sizeUsd < 5) return none(`sized trade ${sizeUsd.toFixed(2)} tUSDT is dust (< 5)`);
+  const sizeBase = BigInt(Math.floor((sizeUsd / spot) * 10 ** market.baseDec));
+  const newExposure = direction === 'buy' ? currentExposure + sizeUsd : currentExposure - sizeUsd;
+  const rc = checkTradeLimits(state, sizeUsd, Math.max(0, newExposure));
+  checks.risk = rc.reason;
+  if (!rc.ok) return none(`risk check failed: ${rc.reason}`);
+  const gasBps = sizeUsd > 0 ? (inp.gasCostUsd / sizeUsd) * 10000 : 0;
+  const edgeBps = Math.abs(gapBps) - 60 - Math.abs(inp.impactBps) - gasBps;
+  if (edgeBps <= 0) return none(`edge ${edgeBps.toFixed(1)} bps does not clear costs (gap ${Math.abs(gapBps)} - fees 60 - impact ${Math.abs(inp.impactBps).toFixed(1)} - gas ${gasBps.toFixed(1)})`);
+  const rationale = `${direction.toUpperCase()} ${sizeUsd.toFixed(2)} tUSDT of ${market.pair} (${(Number(sizeBase) / 10 ** market.baseDec).toFixed(6)} base @ spot ${spot.toFixed(6)}, 5m TWAP ${twap.toFixed(6)}): gap ${gapBps} bps, quoter impact ${inp.impactBps.toFixed(1)} bps, oracle ${inp.oraclePrice.toFixed(6)} (age ${Math.round(inp.oracleAgeSec)}s, dev ${og.reason.split('pool ')[1] ?? ''}), expected edge ${edgeBps.toFixed(1)} bps after 60 bps fees + gas; limits: epoch ${state.epochSpendUsd.toFixed(0)}/${LIMITS.maxEpochUsd}, exposure ${currentExposure.toFixed(0)}/${LIMITS.maxExposureUsd}`;
+  return { market: market.label, pair: market.pair, direction, sizeBase, sizeUsd, expectedEdgeBps: edgeBps, rationale, rationaleHash: keccak256Hex(rationale), checks };
+}
+
+// ---- live RPC collect (JSON-RPC batch; falls back to single calls) ----
+function rpcReq(id, method, params) { return { jsonrpc: '2.0', id, method, params }; }
+function ethCallReq(id, to, data) { return rpcReq(id, 'eth_call', [{ to, data }, 'latest']); }
+async function rpcBatch(calls) {
+  const res = await fetch(RPC_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(calls) });
+  const json = await res.json();
+  if (!Array.isArray(json)) throw new Error('RPC batch not supported');
+  const byId = new Map(json.map((r) => [r.id, r]));
+  return calls.map((c) => {
+    const r = byId.get(c.id);
+    if (!r || r.error) throw new Error(`RPC ${c.method} failed: ${r?.error?.message ?? 'no result'}`);
+    return r.result;
+  });
+}
+async function rpcSingle(method, params) {
+  const res = await fetch(RPC_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rpcReq(1, method, params)) });
+  const json = await res.json();
+  if (json.error) throw new Error(`RPC ${method} failed: ${json.error.message}`);
+  return json.result;
+}
+async function fetchSubgraphTxCounts() {
+  try {
+    const query = `{ pools(where: { id_in: [${MARKETS.map((m) => '"' + m.pool.toLowerCase() + '"').join(', ')}] }) { id txCount liquidity } }`;
+    const res = await fetch(SUBGRAPH_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
+    const json = await res.json();
+    if (json.errors) throw new Error('subgraph error');
+    const map = {};
+    for (const p of json.data?.pools ?? []) map[p.id.toLowerCase()] = { txCount: p.txCount, liquidity: p.liquidity };
+    return map;
+  } catch { return null; }
+}
+
+function stateFromSnapshot() {
+  const a = SNAPSHOT.agent;
+  return {
+    epochDay: a.epochDay, epochSpendUsd: a.epochSpendUsd, realizedPnlTodayUsd: a.realizedPnlTodayUsd,
+    lastTradeAtMs: a.lastTradeAtMs, positions: SNAPSHOT.positions.map((p) => ({ market: p.market, sizeUsd: p.sizeUsd, sizeBase: p.sizeBase, entryPrice: p.entryPrice, stopPrice: p.stopPrice, takeProfitPrice: p.takeProfitPrice })),
+    tradesToday: a.tradesToday,
+  };
+}
+
+async function collectLive() {
+  const startedAt = Date.now();
+  const state = stateFromSnapshot();
+  // Round 1: one batch — block, gas, balances, allowances, pool reads, oracle reads.
+  const calls = [];
+  const idx = {};
+  idx.block = calls.push(rpcReq(calls.length + 1, 'eth_blockNumber', [])) - 1;
+  idx.gas = calls.push(rpcReq(calls.length + 1, 'eth_gasPrice', [])) - 1;
+  idx.tHsk = calls.push(rpcReq(calls.length + 1, 'eth_getBalance', [AGENT, 'latest'])) - 1;
+  idx.tok = {};
+  for (const [k, t] of Object.entries(TOKENS)) {
+    idx.tok[k] = {
+      bal: calls.push(ethCallReq(calls.length + 1, t.addr, SEL.balanceOf + padAddr(AGENT).slice(2))) - 1,
+      allow: calls.push(ethCallReq(calls.length + 1, t.addr, SEL.allowance + padAddr(AGENT).slice(2) + padAddr(ROUTER).slice(2))) - 1,
+    };
+  }
+  idx.mkt = {};
+  for (const m of MARKETS) {
+    idx.mkt[m.label] = {
+      slot0: calls.push(ethCallReq(calls.length + 1, m.pool, SEL.slot0)) - 1,
+      obs5: calls.push(ethCallReq(calls.length + 1, m.pool, encObserve([300, 0]))) - 1,
+      obs1h: calls.push(ethCallReq(calls.length + 1, m.pool, encObserve([3600, 0]))) - 1,
+      liq: calls.push(ethCallReq(calls.length + 1, m.pool, SEL.liquidity)) - 1,
+      svalue: calls.push(ethCallReq(calls.length + 1, SUPRA_STORAGE, SEL.getSvalue + padU256(m.oraclePair).slice(2))) - 1,
+      adapter: calls.push(ethCallReq(calls.length + 1, m.adapter, SEL.latestRoundData)) - 1,
+      adapterDesc: calls.push(ethCallReq(calls.length + 1, m.adapter, SEL.description)) - 1,
+    };
+  }
+  let R;
+  try {
+    R = await rpcBatch(calls);
+  } catch {
+    // Fallback: same calls one by one.
+    R = [];
+    for (const c of calls) R.push(await rpcSingle(c.method, c.params));
+  }
+  const blockNumber = parseInt(R[idx.block], 16);
+  const gasPrice = BigInt(R[idx.gas]);
+  const balances = {
+    tHsk: Number(BigInt(R[idx.tHsk])) / 1e18,
+    tUsdt: Number(wordAt(R[idx.tok.tUsdt.bal], 0)) / 1e6,
+    tWbtc: Number(wordAt(R[idx.tok.tWbtc.bal], 0)) / 1e8,
+    tWhsk: Number(wordAt(R[idx.tok.tWhsk.bal], 0)) / 1e18,
+    routerAllowances: {
+      tUsdt: Number(wordAt(R[idx.tok.tUsdt.allow], 0)) / 1e6,
+      tWbtc: Number(wordAt(R[idx.tok.tWbtc.allow], 0)) / 1e8,
+      tWhsk: Number(wordAt(R[idx.tok.tWhsk.allow], 0)) / 1e18,
+    },
+    router: ROUTER,
+  };
+  // Per-market decode (spot / TWAPs / oracle) — quoter needs spot first.
+  const decoded = MARKETS.map((m) => {
+    const p = idx.mkt[m.label];
+    const sqrt = wordAt(R[p.slot0], 0);
+    const tick = Number(signed(wordAt(R[p.slot0], 1), 24));
+    const cum5 = decodeDynUints(R[p.obs5], 0).map((v) => signed(v, 56));
+    const cum1h = decodeDynUints(R[p.obs1h], 0).map((v) => signed(v, 56));
+    const twapTick5m = Number((cum5[1] - cum5[0]) / 300n);
+    const twapTick1h = Number((cum1h[1] - cum1h[0]) / 3600n);
+    const spotPrice = priceFromSqrt(sqrt, m.dec0, m.dec1);
+    const sv = [wordAt(R[p.svalue], 0), wordAt(R[p.svalue], 1), wordAt(R[p.svalue], 2), wordAt(R[p.svalue], 3)];
+    const nowSec = Math.floor(Date.now() / 1000);
+    const oraclePrice = sv[1] > 0n && sv[3] > 0n ? Number(sv[3]) / 10 ** Number(sv[1]) : 0;
+    const oracleAgeSec = nowSec - Number(sv[2]) / 1000;
+    const ad = [wordAt(R[p.adapter], 0), wordAt(R[p.adapter], 1), wordAt(R[p.adapter], 2), wordAt(R[p.adapter], 3), wordAt(R[p.adapter], 4)];
+    let adapterDesc = '';
+    try { adapterDesc = decodeString(R[p.adapterDesc]); } catch { adapterDesc = ''; }
+    const adapterPrice = Number(signed(ad[1], 256)) / 1e8;
+    const adapterAgeSec = nowSec - Number(ad[3]);
+    const spot = m.baseIsToken0 ? spotPrice : 1 / spotPrice;
+    return {
+      m, tick, twapTick5m, twapTick1h, spotPrice, spot,
+      liquidity: wordAt(R[p.liq], 0).toString(),
+      oracle: { price: oraclePrice, ageSec: Math.round(oracleAgeSec), fresh: oraclePrice > 0 && oracleAgeSec <= LIMITS.maxOracleAgeSec, populated: sv[1] > 0n && sv[3] > 0n, adapterPrice, adapterAgeSec: Math.round(adapterAgeSec), adapterDescription: adapterDesc, deviationBps: oracleDeviationBps(spot, oraclePrice) },
+    };
+  });
+  // Round 2: quoter for the $100 candidate size on each market.
+  const hskOracle = decoded.find((d) => d.m.oraclePair === SUPRA_PAIRS.HSK)?.oracle.price ?? 0;
+  const quoteCalls = decoded.map((d, i) => {
+    const size = BigInt(Math.floor((100 / d.spot) * 10 ** d.m.baseDec));
+    return ethCallReq(i + 1, QUOTER, encQuote(d.m.base, d.m.quote, size, d.m.fee));
+  });
+  const QR = await rpcBatch(quoteCalls);
+  const markets = decoded.map((d, i) => {
+    const amountOut = wordAt(QR[i], 0);
+    const gasEstimate = wordAt(QR[i], 3);
+    const execPrice = (Number(amountOut) / Number(BigInt(Math.floor((100 / d.spot) * 10 ** d.m.baseDec)))) * 10 ** (d.m.baseDec - d.m.quoteDec);
+    const impactBps = (execPrice / d.spot - 1) * 10000;
+    // Gas cost in USD uses the HSK price (gas is paid in tHSK). NOTE: the
+    // Node dashboard (src/dashboard.ts) multiplies by the market's oracle
+    // price instead — identical for WHSK, but it overstates WBTC gas cost
+    // ~740,000x, so the static page corrects it here.
+    const gasCostUsd = (Number(gasEstimate) * Number(gasPrice) * hskOracle) / 1e18;
+    const snap = { pool: d.m.pool, tick: d.tick, twapTick5m: d.twapTick5m, spotPrice: d.spotPrice };
+    const twap5m = (() => { const p = twapPriceFromTick(d.twapTick5m, d.m.dec0, d.m.dec1); return d.m.baseIsToken0 ? p : 1 / p; })();
+    const twap1h = (() => { const p = twapPriceFromTick(d.twapTick1h, d.m.dec0, d.m.dec1); return d.m.baseIsToken0 ? p : 1 / p; })();
+    const dec = decide(d.m, {
+      snapshot: snap, impactBps, oraclePrice: d.oracle.price, oracleAgeSec: d.oracle.ageSec, gasCostUsd,
+      baseBalance: d.m.base === TOKENS.tWhsk.addr ? BigInt(Math.round(balances.tWhsk * 1e18)) : BigInt(Math.round(balances.tWbtc * 1e8)),
+      quoteBalance: BigInt(Math.round(balances.tUsdt * 1e6)), state,
+    });
+    const stops = checkStops(state.positions.filter((p) => p.market === d.m.label), d.spot, twap5m);
+    return {
+      label: d.m.label, pair: d.m.pair, pool: d.m.pool, fee: d.m.fee,
+      spot: d.spot, twap5m, twap1h, gapBps: d.tick - d.twapTick5m,
+      tick: d.tick, twapTick5m: d.twapTick5m, liquidity: d.liquidity,
+      impactBps, execPrice, candidateSizeUsd: 100, oracle: d.oracle,
+      decision: { direction: dec.direction, sizeUsd: dec.sizeUsd, expectedEdgeBps: dec.expectedEdgeBps, rationale: dec.rationale, rationaleHash: dec.rationaleHash, checks: dec.checks },
+      stops: stops.map((s) => s.reason),
+    };
+  });
+  const sg = await fetchSubgraphTxCounts();
+  if (sg) for (const mk of markets) { const row = sg[mk.pool.toLowerCase()]; if (row) mk.subgraphTxCount = row.txCount; }
+  // Positions & PnL (snapshot state, live spot).
+  const spotByMarket = new Map(markets.map((r) => [r.label, r.spot]));
+  let unrealizedUsd = 0;
+  const positions = SNAPSHOT.positions.map((p) => {
+    const cur = spotByMarket.get(p.market);
+    const unrl = cur !== undefined ? (cur - p.entryPrice) * p.sizeBase : 0;
+    unrealizedUsd += unrl;
+    return { ...p, currentPrice: cur ?? null, unrealizedPnlUsd: unrl, stopDistanceBps: cur !== undefined ? ((cur - p.stopPrice) / p.entryPrice) * 10000 : null, tpDistanceBps: cur !== undefined ? ((p.takeProfitPrice - cur) / p.entryPrice) * 10000 : null };
+  });
+  const exposureUsd = SNAPSHOT.positions.reduce((s, p) => s + p.sizeUsd, 0);
+  const cooldownRemainingSec = state.lastTradeAtMs > 0 ? Math.max(0, LIMITS.cooldownSec - (Date.now() - state.lastTradeAtMs) / 1000) : 0;
+  const worstDev = Math.max(...markets.map((r) => r.oracle?.deviationBps ?? 0));
+  const worstAge = Math.max(...markets.map((r) => r.oracle?.ageSec ?? 0));
+  const caps = [
+    { id: 'maxTrade', name: 'Max trade', limit: LIMITS.maxTradeUsd, current: null, unit: 'tUSDT', status: 'ok', detail: 'per-trade cap' },
+    { id: 'maxEpoch', name: 'Max epoch spend', limit: LIMITS.maxEpochUsd, current: state.epochSpendUsd, unit: 'tUSDT', status: state.epochSpendUsd >= LIMITS.maxEpochUsd ? 'breached' : state.epochSpendUsd / LIMITS.maxEpochUsd > 0.8 ? 'warn' : 'ok', detail: `epoch ${state.epochDay} (snapshot)` },
+    { id: 'maxExposure', name: 'Max exposure', limit: LIMITS.maxExposureUsd, current: exposureUsd, unit: 'tUSDT', status: exposureUsd > LIMITS.maxExposureUsd ? 'breached' : exposureUsd / LIMITS.maxExposureUsd > 0.8 ? 'warn' : 'ok', detail: `${state.positions.length} open position(s) (snapshot)` },
+    { id: 'dailyLoss', name: 'Daily loss breaker', limit: LIMITS.dailyLossCapUsd, current: state.realizedPnlTodayUsd, unit: 'tUSDT', status: state.realizedPnlTodayUsd <= -LIMITS.dailyLossCapUsd ? 'breached' : 'ok', detail: 'realised PnL today; breaker at -50 (snapshot)' },
+    { id: 'slippage', name: 'Max slippage', limit: LIMITS.maxSlippageBps, current: null, unit: 'bps', status: 'ok', detail: 'oracle-anchored amountOutMinimum' },
+    { id: 'oracleDev', name: 'Max oracle deviation', limit: LIMITS.maxOracleDeviationBps, current: worstDev, unit: 'bps', status: worstDev > LIMITS.maxOracleDeviationBps ? 'breached' : 'ok', detail: 'worst pool vs oracle now (live)' },
+    { id: 'oracleAge', name: 'Max oracle age', limit: LIMITS.maxOracleAgeSec, current: worstAge, unit: 's', status: worstAge > LIMITS.maxOracleAgeSec ? 'breached' : 'ok', detail: 'oldest oracle feed now (live)' },
+    { id: 'cooldown', name: 'Trade cooldown', limit: LIMITS.cooldownSec, current: Math.round(cooldownRemainingSec), unit: 's left', status: cooldownRemainingSec > 0 ? 'warn' : 'ok', detail: state.lastTradeAtMs ? `last trade ${new Date(state.lastTradeAtMs).toISOString()} (snapshot)` : 'no trades yet' },
+    { id: 'stopLoss', name: 'Stop-loss', limit: LIMITS.stopLossBps, current: null, unit: 'bps', status: 'ok', detail: 'dual-confirmation (spot AND 5m TWAP)' },
+    { id: 'takeProfit', name: 'Take-profit', limit: LIMITS.takeProfitBps, current: null, unit: 'bps', status: 'ok', detail: 'dual-confirmation (spot AND 5m TWAP)' },
+  ];
+  return {
+    generatedAt: new Date().toISOString(), collectMs: Date.now() - startedAt,
+    network: { chainId: 133, name: 'HSK Chain Testnet', blockNumber: blockNumber.toString(), rpc: RPC_URL, explorer: EXPLORER },
+    agent: { ...SNAPSHOT.agent }, balances, markets, positions,
+    pnl: { realizedTodayUsd: state.realizedPnlTodayUsd, unrealizedUsd, totalUsd: state.realizedPnlTodayUsd + unrealizedUsd },
+    risk: { limits: { ...LIMITS }, caps }, vaults: SNAPSHOT.vaults, journal: SNAPSHOT.journal,
+    subgraphOk: sg !== null,
+  };
+}
+
+// ---- render (adapted from dashboard/index.html; same layout) ----
+function badgeFor(dir) {
+  if (dir === 'buy') return '<span class="pill buy">BUY</span>';
+  if (dir === 'sell') return '<span class="pill sell">SELL</span>';
+  return '<span class="pill none">NO TRADE</span>';
+}
+function capBadge(st) {
+  if (st === 'breached') return '<span class="badge b-red">BREACHED</span>';
+  if (st === 'warn') return '<span class="badge b-amber">NEAR LIMIT</span>';
+  return '<span class="badge b-green">OK</span>';
+}
+function snapshotLabel() {
+  return new Date(SNAPSHOT.generatedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) + ' WIB';
+}
+function render(s) {
+  const stale = s.stale ? ' <span class="badge b-amber">STALE — showing snapshot data</span>' : '';
+  $('status-line').innerHTML = `block #${fmtInt(s.network.blockNumber)} · updated ${esc(new Date(s.generatedAt).toLocaleTimeString())} · refreshes every 15s${stale}`;
+  $('src-banner').innerHTML = `<b>Data sources:</b> pool prices, oracle, balances &amp; allowances — <b>LIVE</b> from the HSK testnet RPC in your browser (CORS open). ` +
+    `Agent state, positions, risk-cap usage, vaults &amp; journal — <b>SNAPSHOT per ${esc(snapshotLabel())}</b> (re-publish to refresh). ` +
+    (s.subgraphOk === false ? '<span class="badge b-amber">subgraph unreachable — tx counts hidden</span>' : 'Subgraph: live.');
+
+  const a = s.agent;
+  $('agent').innerHTML = `<div class="kv">
+    <div><b>Mode</b><span>${esc(a.mode)}</span></div>
+    <div><b>Address</b><span class="mono">${esc(a.address)}</span></div>
+    <div><b>Epoch (UTC)</b><span>${esc(a.epochDay)}</span></div>
+    <div><b>Last cycle</b><span>${a.lastCycleAt ? esc(new Date(a.lastCycleAt).toLocaleString()) : '—'}</span></div>
+    <div><b>Trades today</b><span>${a.tradesToday}</span></div>
+    <div><b>Epoch spend</b><span>${fmt(a.epochSpendUsd)} / 250 tUSDT</span></div>
+    <div><b>Realised PnL today</b><span class="${a.realizedPnlTodayUsd < 0 ? 'neg' : 'pos'}">${fmt(a.realizedPnlTodayUsd)} tUSDT</span></div>
+  </div>`;
+
+  $('markets').innerHTML = s.markets.map((m) => {
+    if (m.error) return `<div class="err"><b>${esc(m.label)}</b> — live read failed: ${esc(m.error)}</div>`;
+    const o = m.oracle, d = m.decision;
+    const gapCls = Math.abs(m.gapBps) >= 150 ? (m.gapBps > 0 ? 'neg' : 'pos') : '';
+    return `<h3 style="margin:12px 0 6px">${esc(m.label)} <span class="mut small mono">${esc(m.pool)}</span> · fee ${m.fee} ${badgeFor(d.direction)}</h3>
+    <div class="kv">
+      <div><b>Spot (tUSDT/base)</b><span>${fmt(m.spot, 6)}</span></div>
+      <div><b>5m TWAP</b><span>${fmt(m.twap5m, 6)}</span></div>
+      <div><b>1h TWAP</b><span>${fmt(m.twap1h, 6)}</span></div>
+      <div><b>Gap spot − TWAP</b><span class="${gapCls}">${m.gapBps} bps</span></div>
+      <div><b>Quoter impact (100 tUSDT)</b><span>${fmt(m.impactBps, 1)} bps</span></div>
+      <div><b>Liquidity</b><span class="mono">${fmtInt(m.liquidity)}</span></div>
+      <div><b>Subgraph txCount</b><span>${m.subgraphTxCount !== undefined ? fmtInt(m.subgraphTxCount) : '—'}</span></div>
+      <div><b>Oracle (Supra ${o.populated ? '' : 'UNPOPULATED'})</b><span>$${fmt(o.price, 6)} · age ${fmtInt(o.ageSec)}s ${o.fresh ? '<span class="badge b-green">fresh</span>' : '<span class="badge b-red">stale</span>'}</span></div>
+      <div><b>Pool vs oracle</b><span>${fmt(o.deviationBps, 1)} bps (cap 250)</span></div>
+      <div><b>Decision size / edge</b><span>${fmt(d.sizeUsd)} tUSDT · ${fmt(d.expectedEdgeBps, 1)} bps</span></div>
+    </div>
+    <details><summary>Decision rationale + checks</summary>
+      <p class="rationale">${esc(d.rationale)}</p>
+      <p class="small mut">gap: ${esc(d.checks.gap)} · impact: ${esc(d.checks.impact)} · oracle: ${esc(d.checks.oracle)} · risk: ${esc(d.checks.risk)} · balance: ${esc(d.checks.balance)}<br>rationaleHash <span class="mono">${esc(d.rationaleHash)}</span></p>
+    </details>
+    ${m.stops && m.stops.length ? `<div class="err">${m.stops.map(esc).join('<br>')}</div>` : ''}`;
+  }).join('');
+
+  const p = s.pnl;
+  let posHtml = `<div class="kv" style="margin-bottom:10px">
+    <div><b>Realised today</b><span class="${p.realizedTodayUsd < 0 ? 'neg' : 'pos'}">${fmt(p.realizedTodayUsd)} tUSDT</span></div>
+    <div><b>Unrealised (open)</b><span class="${p.unrealizedUsd < 0 ? 'neg' : 'pos'}">${fmt(p.unrealizedUsd)} tUSDT</span></div>
+    <div><b>Total</b><span class="${p.totalUsd < 0 ? 'neg' : 'pos'}">${fmt(p.totalUsd)} tUSDT</span></div>
+  </div>`;
+  if (!s.positions.length) {
+    posHtml += '<p class="mut">No open positions. A BUY decision opens a long; a SELL closes it. Fork-test vault trades live in the journal, not in state.</p>';
+  } else {
+    posHtml += `<table><tr><th>Market</th><th class="num">Entry</th><th class="num">Current</th><th class="num">Size</th><th class="num">Unrealised</th><th>Stop / TP</th></tr>` +
+      s.positions.map((x) => `<tr><td>${esc(x.market)}</td><td class="num">${fmt(x.entryPrice, 6)}</td><td class="num">${fmt(x.currentPrice, 6)}</td><td class="num">${fmt(x.sizeUsd)} tUSDT</td><td class="num ${x.unrealizedPnlUsd < 0 ? 'neg' : 'pos'}">${fmt(x.unrealizedPnlUsd)}</td><td>${fmt(x.stopPrice, 6)} / ${fmt(x.takeProfitPrice, 6)}</td></tr>`).join('') + '</table>';
+  }
+  $('positions').innerHTML = posHtml;
+
+  $('risk').innerHTML = s.risk.caps.map((c) =>
+    `<div class="cap"><span class="cname">${esc(c.name)}<small>${esc(c.detail)}</small></span>
+    <span>${c.current === null ? '' : fmt(c.current) + ' '} / ${fmt(c.limit)} ${esc(c.unit)} ${capBadge(c.status)}</span></div>`
+  ).join('') + `<p class="small mut">Limits mirror contracts/DESIGN.md. The vault enforces the same caps on-chain; off-chain checks run first in the decision pipeline. Cap usage is from the ${esc(snapshotLabel())} snapshot except oracle deviation / age, which are live.</p>`;
+
+  $('vaults').innerHTML = s.vaults.map((v) => {
+    if (!v.deployed) return `<div><b>${esc(v.market)}</b> — <span class="badge b-amber">NOT DEPLOYED</span><p class="small mut">${esc(v.note)}</p></div>`;
+    return `<div><b>${esc(v.market)}</b> — <span class="badge b-green">DEPLOYED</span>
+      <span class="mono small">${esc(v.address)}</span>
+      <div class="kv" style="margin-top:6px">
+        <div><b>NAV</b><span>${fmt(v.navQuote)} tUSDT</span></div>
+        <div><b>Exposure</b><span>${fmt(v.exposureQuote)} tUSDT</span></div>
+        <div><b>Epoch spend</b><span>${fmt(v.epochSpend)} tUSDT</span></div>
+        <div><b>Loss today</b><span>${fmt(v.realizedLossToday)} tUSDT</span></div>
+        <div><b>Paused / Frozen</b><span>${v.paused ? 'PAUSED' : 'no'} / ${v.frozen ? 'FROZEN' : 'no'}</span></div>
+        <div><b>Vault spot / oracle</b><span>${fmt(v.spotPrice, 6)} / ${fmt(v.oraclePrice, 6)}</span></div>
+      </div>${v.note ? `<p class="small mut">${esc(v.note)}</p>` : ''}</div>`;
+  }).join('');
+
+  const b = s.balances;
+  $('balances').innerHTML = `<div class="kv">
+    <div><b>tHSK (gas)</b><span>${fmt(b.tHsk, 4)}</span></div>
+    <div><b>tUSDT</b><span>${fmt(b.tUsdt)}</span></div>
+    <div><b>tWBTC</b><span>${fmt(b.tWbtc, 6)}</span></div>
+    <div><b>tWHSK</b><span>${fmt(b.tWhsk)}</span></div>
+    <div><b>Router allowances</b><span class="small">tUSDT ${fmt(b.routerAllowances.tUsdt)} · tWBTC ${fmt(b.routerAllowances.tWbtc, 6)} · tWHSK ${fmt(b.routerAllowances.tWhsk)}</span></div>
+    <div><b>Router</b><span class="mono">${esc(b.router)}</span></div>
+  </div><p class="small mut">Allowances are 0 until the user approves the router in the HSKSwap app or explorer — expected before any live trade.</p>`;
+
+  const j = s.journal;
+  $('journal').innerHTML =
+    `<p>${j.entries} entries · chain <b>${j.valid ? '<span class="badge b-green">VALID</span>' : '<span class="badge b-red">BROKEN at #' + j.firstBadIndex + '</span>'}</b> <span class="mut small">(each entry hashes the previous one; verified when this page was published, ${esc(snapshotLabel())})</span></p>` +
+    (j.tail.length ? `<table><tr><th>Time (UTC)</th><th>Kind</th><th>Market</th><th>Decision</th><th class="num">Size</th><th class="num">Edge</th><th>Hash</th></tr>` +
+      j.tail.map((e) => `<tr><td class="small">${e.ts ? esc(new Date(e.ts).toLocaleString()) : '—'}</td><td>${esc(e.kind ?? '')}</td><td>${esc(e.market ?? '')}</td><td>${badgeFor(e.direction)}${e.note ? `<br><span class="small mut">${esc(e.note)}</span>` : ''}</td><td class="num">${e.sizeUsd !== undefined ? fmt(e.sizeUsd) : '—'}</td><td class="num">${e.edgeBps !== undefined ? fmt(e.edgeBps, 1) : '—'}</td><td class="mono">${short(e.hash)}</td></tr>${e.rationale ? `<tr><td colspan="7" class="rationale">${esc(e.rationale)}</td></tr>` : ''}`).join('') + '</table>'
+    : '<p class="mut">Journal is empty — run <span class="mono">npm run day3</span> for a live cycle.</p>');
+}
+
+// ---- boot: live refresh every 15s; fall back to the embedded snapshot ----
+let lastGood = null;
+async function load() {
+  try {
+    const s = await collectLive();
+    lastGood = s;
+    render(s);
+  } catch (e) {
+    if (lastGood) {
+      render({ ...lastGood, stale: true });
+    } else if (SNAPSHOT) {
+      // First load failed (offline / RPC down): show the snapshot as-is.
+      const s = { ...SNAPSHOT, stale: true, subgraphOk: false };
+      render(s);
+      $('status-line').innerHTML = '<span class="badge b-amber">OFFLINE</span> live RPC unreachable — showing snapshot from ' + esc(snapshotLabel());
+    } else {
+      $('status-line').innerHTML = '<span class="badge b-red">ERROR</span> ' + esc(e.message);
+    }
+  }
+}
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>
